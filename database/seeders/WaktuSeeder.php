@@ -7,55 +7,6 @@ use App\Models\Waktu;
 use Carbon\Carbon;
 
 class WaktuSeeder extends Seeder
-// {
-//     public function run()
-//     {
-//         $jadwalHari = [
-//             'Senin'  => ['jam_max' => 9, 'jam_awal' => '07:00', 'istirahat_pada' => [3], 'istirahat_durasi' => 20],
-//             'Selasa' => ['jam_max' => 9, 'jam_awal' => '07:00', 'istirahat_pada' => [3], 'istirahat_durasi' => 20],
-//             'Rabu'   => ['jam_max' => 9, 'jam_awal' => '07:00', 'istirahat_pada' => [3], 'istirahat_durasi' => 20],
-//             'Kamis'  => ['jam_max' => 9, 'jam_awal' => '07:00', 'istirahat_pada' => [3], 'istirahat_durasi' => 20],
-//             'Jumat'  => ['jam_max' => 5, 'jam_awal' => '06:30', 'istirahat_pada' => [2],    'istirahat_durasi' => 10],
-//             'Sabtu'  => ['jam_max' => 7, 'jam_awal' => '07:00', 'istirahat_pada' => [3],    'istirahat_durasi' => 20],
-//         ];
-
-//         foreach ($jadwalHari as $hari => $config) {
-//             $this->buatHari($hari, $config);
-//         }
-//     }
-
-//     private function buatHari($hari, $config)
-//     {
-//         $jamMulai = Carbon::createFromFormat('H:i', $config['jam_awal']);
-//         $istirahatSetelah = $config['istirahat_pada'];
-//         $durasiIstirahat = $config['istirahat_durasi'];
-
-//         for ($jamKe = 1; $jamKe <= $config['jam_max']; $jamKe++) {
-
-//             // Cek apakah perlu istirahat sebelum jam ke sekarang
-//             if (in_array($jamKe, $istirahatSetelah)) {
-//                 Waktu::create([
-//                     'hari' => $hari,
-//                     'jam_ke' => $jamKe - 0.5,
-//                     'jam_mulai' => $jamMulai->format('H:i'),
-//                     'jam_selesai' => $jamMulai->copy()->addMinutes($durasiIstirahat)->format('H:i'),
-//                     'ket' => 'Istirahat'
-//                 ]);
-//                 $jamMulai->addMinutes($durasiIstirahat);
-//             }
-
-//             Waktu::create([
-//                 'hari' => $hari,
-//                 'jam_ke' => $jamKe,
-//                 'jam_mulai' => $jamMulai->format('H:i'),
-//                 'jam_selesai' => $jamMulai->copy()->addMinutes(40)->format('H:i'),
-//                 'ket' => 'Pelajaran'
-//             ]);
-
-//             $jamMulai->addMinutes(40);
-//         }
-//     }
-// }
 {
     public function run()
     {

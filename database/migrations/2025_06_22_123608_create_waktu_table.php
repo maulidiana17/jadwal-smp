@@ -17,6 +17,7 @@ return new class extends Migration
             $table->unsignedTinyInteger('jam_ke');
             $table->string('jam_mulai');
             $table->string('jam_selesai');
+            $table->string('ket');
             $table->timestamps();
         });
     }
