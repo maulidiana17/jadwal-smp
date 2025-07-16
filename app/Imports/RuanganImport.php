@@ -18,7 +18,7 @@ class RuanganImport implements ToModel, WithHeadingRow
         return new Ruangan([
             'kode_ruangan' => $row['kode_ruang'],
             'nama' => $row['nama'],
-            'kapasitas' => $row['kapasitas'],
+            'tipe' => $row['tipe'],
             'fasilitas' => $row['fasilitas'],
         ]);
     }
