@@ -48,7 +48,7 @@
   <div class="login-box">
     <img src="{{ asset('sd/images/logo.png') }}" alt="Logo">
     <h5>Welcome to Sistem Penjadwalan<br><strong>SMPN 1 GENTENG</strong></h5>
-    <form action="{{ route('login_proses') }}" method="POST">
+    <form action="/login_proses" method="POST">
       @csrf
       <input type="email" name="email" class="form-control" placeholder="Email" required>
       @error('email')
