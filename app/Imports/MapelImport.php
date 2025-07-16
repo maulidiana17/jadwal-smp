@@ -18,7 +18,8 @@ class MapelImport implements ToModel, WithHeadingRow
         return new Mapel([
             'kode_mapel' => $row['kode_mapel'],
             'mapel' => $row['mapel'],
-            'deskripsi' => $row['deskripsi'],
+            'jam_per_minggu' => $row['jam_per_minggu'],
+            'ruang_khusus' => $row['ruang_khusus'],
         ]);
     }
 }
