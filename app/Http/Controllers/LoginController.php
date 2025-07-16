@@ -25,7 +25,7 @@ class LoginController extends Controller
         ];
 
         if(Auth::attempt($data)){
-            return redirect()->route('dashboard');
+            return redirect('/dashboard');
         } else{
             return redirect()->route('login')->with('failed','email atau password salah');
         }
