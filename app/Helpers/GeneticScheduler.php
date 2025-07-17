@@ -32,22 +32,13 @@ class GeneticScheduler
 
         $this->maxGuruJam = $maxGuruJam;
         $this->groupWaktuPerSlot();
-        // $this->waktuList = $this->waktuList
-        //     ->sortBy(fn($w) => [$w->hari, $w->jam_ke])
-        //     ->values();
-        // $this->waktuList = $this->waktuList
-        //     ->filter(fn($w) => !str_contains(strtolower($w->ket), 'istirahat'))
-        //     ->sortBy(fn($w) => [$w->hari, $w->jam_ke])
-        //     ->values();
-            $this->waktuList = $this->waktuList
-                ->filter(fn($w) =>
-                    !str_contains(strtolower($w->ket), 'istirahat') &&
-                    $w->jam_ke >= 1 && $w->jam_ke <= 9
-                )
-                ->sortBy(fn($w) => [$w->hari, $w->jam_ke])
-                ->values();
-
-
+        $this->waktuList = $this->waktuList
+            ->filter(fn($w) =>
+                !str_contains(strtolower($w->ket), 'istirahat') &&
+                $w->jam_ke >= 1 && $w->jam_ke <= 9
+            )
+            ->sortBy(fn($w) => [$w->hari, $w->jam_ke])
+            ->values();
 
         $this->waktuByHari = $this->waktuList
             ->groupBy('hari')
