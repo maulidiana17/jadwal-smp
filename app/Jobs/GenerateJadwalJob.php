@@ -1,3 +1,6 @@
+<?php
+namespace App\Jobs;
+
 use App\Helpers\GeneticScheduler;
 use App\Models\Waktu;
 use Illuminate\Bus\Queueable;

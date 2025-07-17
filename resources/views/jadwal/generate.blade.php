@@ -7,7 +7,36 @@
                 <div class="card-body">
                     <h3>Generate Jadwal (Algoritma Genetika)</h3>
 
-                    <form action="{{ route('jadwal.process') }}" method="POST">
+                    
+                    <form id="formPreview" method="POST" action="{{ route('jadwal.generatePreview') }}">
+                        @csrf
+                        <div class="mb-3">
+                            <label>Jumlah Populasi</label>
+                            <input type="number" name="popSize" class="form-control" value="50" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Probabilitas Crossover (0.6 - 1)</label>
+                            <input type="number" name="crossRate" class="form-control" step="0.01" value="0.7" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Probabilitas Mutasi (0.1 - 1)</label>
+                            <input type="number" name="mutRate" class="form-control" step="0.01" value="0.1" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Jumlah Generasi</label>
+                            <input type="number" name="generations" class="form-control" value="100" required>
+                        </div>
+                        <button class="btn btn-secondary">🔍 Coba Simulasi</button>
+                    </form>
+
+                    {{-- Tambahkan jarak di sini --}}
+                    <hr class="my-4">
+                    <h4>Atau langsung Generate & Simpan Jadwal</h4>
+
+                    <form d="formGenerate" action="{{ route('jadwal.process') }}" method="POST">
                     @csrf
                         <div class="mb-3">
                             <label>Jumlah Populasi</label>
@@ -30,7 +59,7 @@
                         </div>
 
                         <button type="submit" class="btn btn-info">Mulai Generate</button>
-                        <a href="{{ route('jadwal.index') }}" class="btn btn-light">Kembali</a>
+                        <a href="{{ route('jadwal.hasil_generate') }}" class="btn btn-light">Kembali</a>
                     </form>
 
                     <div id="loading" class="mt-4 text-info" style="display: none;">
@@ -40,6 +69,17 @@
               </div>
          </div>
 </div>
+
+<script>
+    document.getElementById('formGenerate').addEventListener('submit', function () {
+        document.getElementById('loading').style.display = 'block';
+    });
+
+    document.getElementById('formPreview').addEventListener('submit', function () {
+        document.getElementById('loading').style.display = 'block';
+    });
+</script>
+
 
 @endsection
 

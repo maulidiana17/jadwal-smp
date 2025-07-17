@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('kode_mapel');
             $table->string('mapel');
-            $table->string('deskripsi');
+            $table->string('jam_per_minggu');
+            $table->string('ruang_khusus');
             $table->timestamps();
         });
     }
