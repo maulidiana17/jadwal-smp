@@ -7,35 +7,6 @@
                 <div class="card-body">
                     <h3>Generate Jadwal (Algoritma Genetika)</h3>
 
-                    
-                    <form id="formPreview" method="POST" action="{{ route('jadwal.generatePreview') }}">
-                        @csrf
-                        <div class="mb-3">
-                            <label>Jumlah Populasi</label>
-                            <input type="number" name="popSize" class="form-control" value="50" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label>Probabilitas Crossover (0.6 - 1)</label>
-                            <input type="number" name="crossRate" class="form-control" step="0.01" value="0.7" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label>Probabilitas Mutasi (0.1 - 1)</label>
-                            <input type="number" name="mutRate" class="form-control" step="0.01" value="0.1" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label>Jumlah Generasi</label>
-                            <input type="number" name="generations" class="form-control" value="100" required>
-                        </div>
-                        <button class="btn btn-secondary">🔍 Coba Simulasi</button>
-                    </form>
-
-                    {{-- Tambahkan jarak di sini --}}
-                    <hr class="my-4">
-                    <h4>Atau langsung Generate & Simpan Jadwal</h4>
-
                     <form d="formGenerate" action="{{ route('jadwal.process') }}" method="POST">
                     @csrf
                         <div class="mb-3">
