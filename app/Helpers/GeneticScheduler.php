@@ -238,18 +238,23 @@ class GeneticScheduler
             $pop[] = $chrom;
             
             // Validasi mapel ≤2 jam tidak muncul di hari berbeda
-            foreach ($chrom as $item) {
+                foreach ($chrom as $item) {
+                $mapelId = $item['mapel_id'];
+                $kelasId = $item['kelas_id'];
+                $jamPerminggu = $this->mapelJamPerMinggu[$mapelId] ?? 0;
+
                 $grouped = collect($chrom)
-                    ->where('kelas_id', $item['kelas_id'])
-                    ->where('mapel_id', $item['mapel_id'])
+                    ->where('kelas_id', $kelasId)
+                    ->where('mapel_id', $mapelId)
                     ->groupBy(function ($x) {
                         $waktu = $this->waktuList->firstWhere('id', $x['waktu_id']);
                         return $waktu->hari ?? '??';
                     });
 
-                if (count($grouped) > 1 && ($this->mapelJamPerMinggu[$item['mapel_id']] ?? 0) <= 2) {
+                // 1. Mapel ≤ 2 jam per minggu tidak boleh menyebar di lebih dari satu hari
+                if ($jamPerminggu <= 2 && count($grouped) > 1) {
                     $hariList = implode(', ', array_keys($grouped->toArray()));
-                    Log::warning("⚠️ Mapel ID {$item['mapel_id']} (≤2 jam) di kelas {$item['kelas_id']} muncul di beberapa hari: $hariList");
+                    Log::warning("⚠️ Mapel ID {$mapelId} (≤2 jam) di kelas {$kelasId} muncul di beberapa hari: $hariList");
                 }
 
                 // 2. Mapel 3–4 jam → maksimal 2 jam per hari
