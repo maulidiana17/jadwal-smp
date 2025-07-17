@@ -10,12 +10,12 @@ class UserRoleSeeder extends Seeder
 {
     public function run(): void
     {
-        $admin = User::find(2); // sesuaikan ID
+        $admin = User::where('email', 'admin@example.com')->first(); // Ganti dengan email admin Anda
         if ($admin) {
             $admin->assignRole('admin');
         }
 
-        $kurikulum = User::find(7);
+        $kurikulum = User::where('email', 'kuri123@gmail.com')->first();
         if ($kurikulum) {
             $kurikulum->assignRole('kurikulum');
         }
