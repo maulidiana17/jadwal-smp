@@ -20,6 +20,7 @@ class WaktuImport implements ToModel, WithHeadingRow
            'jam_ke' => $row['jam_ke'],
            'jam_mulai' => $row['jam_mulai'],
            'jam_selesai' => $row['jam_selesai'],
+           'ket' => $row['ket'],
         ]);
     }
 }
