@@ -65,29 +65,50 @@ class JadwalController extends Controller
         return $conflict; // true = bentrok
     }
 
-    public function generateProcess(Request $request, SchedulerService $svc)
+    // --- Simulasi langsung ---
+    public function generatePreview(Request $request, SchedulerService $svc)
     {
-        $validated = $request->validate([
-            'popSize'=>'required|integer|min:2',
-            'crossRate'=>'required|numeric|between:0.6,1',
-            'mutRate'=>'required|numeric|between:0.1,1',
-            'generations'=>'required|integer|min:1',
-            'tries'=>'nullable|integer|min:1|max:10',
-        ]);
+        $validated = $this->validateParams($request);
 
         [$bestSchedule, $conflicts, $skipped, $fitness] = $svc->generate($validated);
-        $count = $svc->save($bestSchedule);
-        \Log::info('Jumlah Jadwal yang akan disimpan: ' . count($bestSchedule));
 
         return view('jadwal.evaluasi', [
             'total' => count($bestSchedule),
-            'skipped' => $skipped,  // Karena semua berhasil disimpan
-            // Kalau mau tampilkan analisis konflik:
+            'skipped' => $skipped,
             'conflict_estimation' => $skipped,
             'conflict_details' => $conflicts,
             'fitness' => $fitness,
-            
         ]);
+    }
+
+    // --- Generate via Job Queue ---
+    public function generateProcess(Request $request)
+    {
+        $validated = $this->validateParams($request);
+
+        // Dispatch job ke queue
+        \App\Jobs\GenerateJadwalJob::dispatch($validated);
+
+        return redirect()->route('jadwal.status')
+            ->with('success', 'Penjadwalan sedang diproses. Silakan cek beberapa saat lagi.');
+    }
+
+    // --- Validasi parameter umum ---
+    protected function validateParams(Request $request)
+    {
+        return $request->validate([
+            'popSize' => 'required|integer|min:2',
+            'crossRate' => 'required|numeric|between:0.6,1',
+            'mutRate' => 'required|numeric|between:0.1,1',
+            'generations' => 'required|integer|min:1',
+            'tries' => 'nullable|integer|min:1|max:10',
+        ]);
+    }
+
+    // (Opsional) tampilkan status progress jika pakai sistem notifikasi
+    public function status()
+    {
+        return view('jadwal.status'); // tampilkan status queue, notifikasi, log, dll
     }
 
     public function perKelas()
