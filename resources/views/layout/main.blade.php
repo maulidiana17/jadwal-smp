@@ -128,12 +128,12 @@
         <ul class="navbar-nav navbar-nav-right">
           <li class="nav-item nav-profile dropdown">
             <a class="nav-link dropdown-toggle" href="{{route('profile.setting')}}" data-toggle="dropdown" id="profileDropdown">
-              <img src="{{ auth()->user()->photo ? asset('storage/' . auth()->user()->photo) : asset('assets/images/faces/face1.jpg') }}" alt="profile"/>
+              <img src="{{ asset('storage/' . auth()->user()->photo) }}" alt="Foto Profil" height="30" width="30">
             </a>
             <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">
               <a href="{{route('profile.setting')}}" class="dropdown-item">
                 <i class="mdi mdi-account text-primary"></i>
-                 {{ auth()->user()->role }}
+                 {{ auth()->user()->getRoleNames()->implode(', ') }}
                </a>
               <a href="{{route('user.index')}}" class="dropdown-item">
                 <i class="ti-settings text-primary"></i>

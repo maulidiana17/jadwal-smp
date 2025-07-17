@@ -10,6 +10,12 @@ use App\Http\Controllers\KelasController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PengampuController;
 use App\Http\Controllers\JadwalController;
+use App\Exports\JadwalPerKelasExport;
+use App\Exports\JadwalPerGuruExport;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Models\Kelas;
+use App\Models\Guru;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 use Illuminate\Support\Facades\Route;
 
@@ -31,18 +37,18 @@ Route::get('/', [LoginController::class,'index'])->name('login');
 Route::post('/login_proses', [LoginController::class,'login_proses'])->name('login_proses');
 Route::get('/logout', [LoginController::class, 'logout'])->name('logout');
 
-Route::middleware(['auth', 'admin'])->group(function () {
+Route::middleware(['auth', 'role:admin|kurikulum'])->group(function () {
 
 Route::get('/dashboard', [HomeController::class,'dashboard'])->name('dashboard');
 // USER
-Route::prefix('user')->name('user.')->group(function () {
-    Route::get('/', [HomeController::class,'index'])->name('index');
-    Route::get('/create', [HomeController::class,'create'])->name('create');
-    Route::post('/store', [HomeController::class,'store'])->name('store');
-    Route::get('/edit/{id}', [HomeController::class,'edit'])->name('edit');
-    Route::put('/update/{id}', [HomeController::class,'update'])->name('update');
-    Route::delete('/delete/{id}', [HomeController::class,'delete'])->name('delete');
-});
+// Route::prefix('user')->name('user.')->group(function () {
+//     Route::get('/', [HomeController::class,'index'])->name('index');
+//     Route::get('/create', [HomeController::class,'create'])->name('create');
+//     Route::post('/store', [HomeController::class,'store'])->name('store');
+//     Route::get('/edit/{id}', [HomeController::class,'edit'])->name('edit');
+//     Route::put('/update/{id}', [HomeController::class,'update'])->name('update');
+//     Route::delete('/delete/{id}', [HomeController::class,'delete'])->name('delete');
+// });
 
 // GURU
 Route::prefix('guru')->name('guru.')->group(function () {
@@ -132,12 +138,29 @@ Route::prefix('jadwal')->name('jadwal.')->group(function () {
     Route::get('/export/excel/guru/{id}', [JadwalController::class, 'exportExcelGuru'])->name('exportExcelGuru');
 
 });
- Route::post('/jadwal/process', [JadwalController::class, 'generateProcess'])->name('jadwal.process');
+//  Route::post('/jadwal/process', [JadwalController::class, 'generateProcess'])->name('jadwal.process');
 
 
 //profill
     Route::get('/profile/setting', fn() => view('setting'))->name('profile.setting');
     Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
 
+});
+
+// 🔐 Khusus admin saja
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::prefix('user')->name('user.')->group(function () {
+        Route::get('/', [HomeController::class,'index'])->name('index');
+        Route::get('/create', [HomeController::class,'create'])->name('create');
+        Route::post('/store', [HomeController::class,'store'])->name('store');
+        Route::get('/edit/{id}', [HomeController::class,'edit'])->name('edit');
+        Route::put('/update/{id}', [HomeController::class,'update'])->name('update');
+        Route::delete('/delete/{id}', [HomeController::class,'delete'])->name('delete');
+    });
+
+    Route::prefix('user-role')->group(function () {
+        Route::get('/', [\App\Http\Controllers\UserRoleController::class, 'index'])->name('user-role.index');
+        Route::post('/assign', [\App\Http\Controllers\UserRoleController::class, 'assign'])->name('user-role.assign');
+    });
 });
 

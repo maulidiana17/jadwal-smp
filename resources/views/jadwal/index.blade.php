@@ -63,12 +63,19 @@
         <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap">
             <!-- Kiri: Tombol Export -->
             <div>
-                <a href="#" class="mdi mdi-printer text-danger me-3"> Export PDF</a>
-                <a href="#" class="mdi mdi-file-excel text-success me-3"> Export Excel</a>
+                @if(isset($kelas_aktif) && $kelas_aktif->id)
+                <a href="{{ route('jadwal.exportPDFKelas', $kelas_aktif->id) }}" class="mdi mdi-printer text-danger me-3"> Export PDF</a>
+                <a href="{{ route('jadwal.exportExcelKelas', $kelas_aktif->id) }}" class="mdi mdi-file-excel text-success me-3"> Export Excel</a>
+                @endif
+                @if(isset($guru_aktif) && $guru_aktif->id)
+                    <a href="{{ route('jadwal.exportPDFGuru', $guru_aktif->id) }}" class="mdi mdi-printer text-danger me-3">Export PDF Guru</a>
+                    <a href="{{ route('jadwal.exportExcelGuru', $guru_aktif->id) }}" class="mdi mdi-file-excel text-success me-3"> Export Excel Guru</a>
+                @endif
+
                 <a href="{{ route('jadwal.evaluasi') }}" >
                     <i class="mdi mdi-chart-pie text-warning mb-3"></i> Lihat Evaluasi
                 </a>
-
+                
             </div>
 
             <!-- Kanan: Tombol Reset -->

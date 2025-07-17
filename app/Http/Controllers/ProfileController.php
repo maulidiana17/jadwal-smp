@@ -26,30 +26,18 @@ class ProfileController extends Controller
      */
     public function update(Request $request)
     {
-        $user = auth()->user();
-
-        // Validasi input
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
-            'password' => 'nullable|min:6|confirmed',
-            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048', // max 2MB
         ]);
 
-        // Update nama dan email
+        $user = auth()->user();
         $user->name = $request->name;
-        $user->email = $request->email;
 
-        // Update password jika diisi
-        if ($request->filled('password')) {
-            $user->password = bcrypt($request->password);
-        }
-
-        // Update foto profil jika diunggah
         if ($request->hasFile('photo')) {
-            // Hapus foto lama jika ada
-            if ($user->photo && Storage::disk('public')->exists($user->photo)) {
-                Storage::disk('public')->delete($user->photo);
+            // Hapus foto lama (opsional)
+            if ($user->photo && \Storage::disk('public')->exists($user->photo)) {
+                \Storage::disk('public')->delete($user->photo);
             }
 
             // Simpan foto baru
@@ -59,6 +47,7 @@ class ProfileController extends Controller
 
         $user->save();
 
-        return redirect()->route('profile.setting')->with('success', 'Profil berhasil diperbarui.');
+        return back()->with('success', 'Profil berhasil diperbarui.');
     }
+
 }

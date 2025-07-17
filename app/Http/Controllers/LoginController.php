@@ -14,21 +14,36 @@ class LoginController extends Controller
     }
 
     public function login_proses(Request $request){
-        $request->validate([
-            'email'     =>'required',
-            'password'  =>'required',
-        ]);
+        // $request->validate([
+        //     'email'     =>'required',
+        //     'password'  =>'required',
+        // ]);
 
-        $data = [
-            'email'     => $request->email,
-            'password'  => $request->password
-        ];
+        // $data = [
+        //     'email'     => $request->email,
+        //     'password'  => $request->password
+        // ];
 
-        if(Auth::attempt($data)){
-            return redirect('/dashboard');
-        } else{
-            return redirect()->route('login')->with('failed','email atau password salah');
+        // if(Auth::attempt($data)){
+        //     return redirect('/dashboard');
+        // } else{
+        //     return redirect()->route('login')->with('failed','email atau password salah');
+        // }
+
+        if (Auth::attempt($request->only('email', 'password'))) {
+            $user = auth()->user();
+
+            if ($user->hasRole('admin')) {
+                return redirect()->route('dashboard');
+            } elseif ($user->hasRole('kurikulum')) {
+                return redirect()->route('jadwal.index');
+            } else {
+                return abort(403, 'Role tidak diizinkan.');
+            }
         }
+
+        return redirect()->back()->with('error', 'Email atau password salah.');
+
     }
         public function logout(Request $request)
     {

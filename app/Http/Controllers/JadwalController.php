@@ -16,6 +16,10 @@ use App\Exports\JadwalKelasExport;
 use App\Exports\JadwalGuruExport;
 use Illuminate\Support\Facades\Log;
 use App\Services\SchedulerService;
+use App\Exports\JadwalPerKelasExport;
+use App\Exports\JadwalPerGuruExport;
+use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class JadwalController extends Controller
 {
@@ -32,9 +36,20 @@ class JadwalController extends Controller
             ->get();
 
         //Default kelas_id jika belum dipilih user → ambil kelas pertama
-        $selectedKelasId = $request->kelas_id ?? $kelasList->first()?->id;
+        // $selectedKelasId = $request->kelas_id ?? $kelasList->first()?->id;
+        // $kelas_aktif = Kelas::find($selectedKelasId);
+        // $selectedGuruId = $request->guru_id ?? $guruList->first()?->id;
+        // $guru_aktif = Guru::find($selectedGuruId);
+        $selectedKelasId = $request->kelas_id ?? null;
+        $selectedGuruId = $request->guru_id ?? null;
 
-        return view('jadwal.index', compact('jadwals', 'kelasList', 'guruList', 'ruanganList', 'selectedKelasId'));
+        $kelas_aktif = $selectedKelasId ? Kelas::find($selectedKelasId) : null;
+        $guru_aktif = $selectedGuruId ? Guru::find($selectedGuruId) : null;
+
+
+
+
+        return view('jadwal.index', compact('jadwals', 'kelasList', 'guruList', 'ruanganList', 'selectedKelasId', 'kelas_aktif', 'selectedGuruId', 'guru_aktif'));
     }
 
     function isWaktuBentrok($kelas_id, $guru_id, $ruangan_id, $waktu_id)
@@ -149,41 +164,42 @@ class JadwalController extends Controller
 
         return redirect()->route('jadwal.index')->with('success', 'Semua jadwal berhasil direset.');
     }
-} 
+ 
 
 
 //taruh bawah karena package PDF belum terinstall
-   // public function exportPDFKelas($id)
-    // {
-    //     $kelas = Kelas::findOrFail($id);
-    //     $jadwals = Jadwal::with(['mapel', 'guru', 'waktu', 'ruangan'])
-    //                 ->where('kelas_id', $id)
-    //                 ->get();
+   public function exportPDFKelas($id)
+    {
+        $kelas = Kelas::findOrFail($id);
+        $jadwals = Jadwal::with(['mapel', 'guru', 'waktu', 'ruangan'])
+                    ->where('kelas_id', $id)
+                    ->get();
 
-    //     $pdf = PDF::loadView('jadwal.pdf_kelas', compact('kelas', 'jadwals'));
-    //     return $pdf->download("jadwal-{$kelas->nama}.pdf");
-    // }
+        $pdf = PDF::loadView('jadwal.pdf_kelas', compact('kelas', 'jadwals'));
+        return $pdf->download("jadwal-{$kelas->nama}.pdf");
+    }
 
-    // public function exportPDFGuru($id)
-    // {
-    //     $guru = Guru::findOrFail($id);
-    //     $jadwals = Jadwal::with(['mapel', 'kelas', 'waktu', 'ruangan'])
-    //                 ->where('guru_id', $id)
-    //                 ->get();
+    public function exportPDFGuru($id)
+    {
+        $guru = Guru::findOrFail($id);
+        $jadwals = Jadwal::with(['mapel', 'kelas', 'waktu', 'ruangan'])
+                    ->where('guru_id', $id)
+                    ->get();
 
-    //     $pdf = PDF::loadView('jadwal.pdf_guru', compact('guru', 'jadwals'));
-    //     return $pdf->download("jadwal-{$guru->nama}.pdf");
-    // }
+        $pdf = PDF::loadView('jadwal.pdf_guru', compact('guru', 'jadwals'));
+        return $pdf->download("jadwal-{$guru->nama}.pdf");
+    }
 
 
-    // public function exportExcelKelas($id)
-    // {
-    //     $kelas = Kelas::findOrFail($id);
-    //     return Excel::download(new JadwalKelasExport($id), "jadwal-{$kelas->nama}.xlsx");
-    // }
+    public function exportExcelKelas($id)
+    {
+        $kelas = Kelas::findOrFail($id);
+        return Excel::download(new JadwalPerKelasExport($id), "jadwal-{$kelas->nama}.xlsx");
+    }
 
-    // public function exportExcelGuru($id)
-    // {
-    //     $guru = Guru::findOrFail($id);
-    //     return Excel::download(new JadwalGuruExport($id), "jadwal-{$guru->nama}.xlsx");
-    // }// JadwalController.php
+    public function exportExcelGuru($id)
+    {
+        $guru = Guru::findOrFail($id);
+        return Excel::download(new JadwalPerGuruExport($id), "jadwal-{$guru->nama}.xlsx");
+    }// JadwalController.php
+}

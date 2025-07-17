@@ -76,13 +76,12 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label>Foto Profil</label>
-            <input type="file" name="photo" class="file-upload-default">
-            <div class="input-group col-xs-12">
-              <input type="file" class="form-control file-upload-info" name="photo">
-            </div>
-            @error('photo') <div class="text-danger mt-1">{{ $message }}</div> @enderror
+           <div class="form-group mt-3">
+              <label for="photo">Upload Foto Profil</label>
+              <input type="file" name="photo" class="form-control @error('photo') is-invalid @enderror">
+              @error('photo')
+                  <div class="invalid-feedback">{{ $message }}</div>
+              @enderror
           </div>
 
           <button type="submit" class="btn btn-info me-2">Simpan</button>

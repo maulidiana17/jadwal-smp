@@ -134,84 +134,32 @@ class GeneticScheduler
                     \Log::info(">> Hari $hari - jumlah waktu tersedia: " . count($waktuIdList));
                     $usedWaktu = [];
 
-                    // for ($j = 0; $j < 9; $j++) {
-                    //     // Pilih mapel yang belum melampaui jam_per_minggu
-                    //     $filteredReq = $reqKelas->filter(function ($req) use ($kelasId, $mapelCounter) {
-                    //         $mapelId = $req['mapel_id'];
-                    //         $max = $this->mapelJamPerMinggu[$mapelId] ?? 0;
-                    //         $used = $mapelCounter[$kelasId][$mapelId] ?? 0;
-                    //         return $used < $max;
-                    //     })->values();
-
-                    //     if ($filteredReq->isEmpty()) break;
-                    //     \Log::warning(">> Tidak ada mapel tersisa untuk kelas $kelasId hari $hari");
-
-                    //     $req = $filteredReq->random();
-                    //     $mapelId = $req['mapel_id'];
-
-                    //     // ✅ Cek apakah guru tersedia
-                    //     if (empty($req['guru_options'])) {
-                    //         Log::warning("Tidak ada guru tersedia untuk mapel_id {$mapelId} di kelas_id {$kelasId}");
-                    //         continue; // Skip iterasi ini
-                    //     }
-                    //     $guru = $req['guru_options'][array_rand($req['guru_options'])];
-                        
-                    //     if (($mapelCounter[$kelasId][$mapelId] ?? 0) >= ($this->mapelJamPerMinggu[$mapelId] ?? 0)) {
-                    //         continue; // Lewati jika sudah cukup
-                    //     }
-
-                    //     // Ruangan
-                    //     $filtered = !empty($req['requires_ruang'])
-                    //         ? $this->rooms->filter(fn($room) => strtolower($room->tipe) === strtolower($req['requires_ruang']))
-                    //         : $this->rooms->filter(fn($room) => strtolower($room->tipe) === 'kelas');
-
-                    //     if ($filtered->isEmpty()) {
-                    //         $kelasNama = \App\Models\Kelas::find($kelasId)->nama ?? null;
-                    //         $matched = $this->rooms->first(fn($room) =>
-                    //             strtolower(trim($room->nama)) === strtolower(trim($kelasNama))
-                    //         );
-                    //         $ruangan = $matched ? $matched->id : $this->rooms->random()->id;
-                    //     } else {
-                    //         $ruangan = $filtered->random()->id;
-                    //     }
-
-                    //     // Pilih waktu
-                    //     $availableWaktu = array_values(array_diff($waktuIdList, $usedWaktu));
-                    //     if (empty($availableWaktu)) break;
-
-                    //     $waktuId = $availableWaktu[0];
-                    //     $usedWaktu[] = $waktuId;
-
-
-                    //     // Simpan ke kromosom
-                    //     $chrom[] = [
-                    //         'kelas_id'    => $kelasId,
-                    //         'mapel_id'    => $mapelId,
-                    //         'guru_id'     => $guru,
-                    //         'waktu_id'    => $waktuId,
-                    //         'ruangan_id'  => $ruangan
-                    //     ];
-
-                    //     // Tambah counter mapel
-                    //     if (!isset($mapelCounter[$kelasId])) {
-                    //         $mapelCounter[$kelasId] = [];
-                    //     }
-                    //     $mapelCounter[$kelasId][$mapelId] = ($mapelCounter[$kelasId][$mapelId] ?? 0) + 1;
-                    // }
                     for ($j = 0; $j < 9; $j++) {
                         // Pilih mapel yang belum melampaui jam_per_minggu
-                        $filteredReq = $reqKelas->filter(function ($req) use ($kelasId, $mapelCounter) {
-                            $mapelId = $req['mapel_id'];
-                            $max = $this->mapelJamPerMinggu[$mapelId] ?? 0;
-                            $used = $mapelCounter[$kelasId][$mapelId] ?? 0;
-                            return $used < $max;
-                        })->values();
+                        // ✅ Filter hanya mapel yang masih memiliki jam sisa
+                    $filteredReq = $reqKelas->filter(function ($req) use (
+                        $kelasId, $mapelCounter
+                    ) {
+                        $mapelId = $req['mapel_id'];
+                        $max = $this->mapelJamPerMinggu[$mapelId] ?? 0;
+                        $used = $mapelCounter[$kelasId][$mapelId] ?? 0;
+
+                        // Mapel 1 atau 2 jam hanya boleh muncul sekali
+                        if ($max <= 2 && $used >= $max) {
+                            return false;
+                        }
+                        
+
+                        // Mapel ≥ 3 jam masih boleh lanjut jika belum penuh
+                        return $used < $max;
+                    })->values();
 
                         if ($filteredReq->isEmpty()) break;
 
                         $req = $filteredReq->random();
                         $mapelId = $req['mapel_id'];
-                        $butuh2Jam = in_array($mapelId, $this->mapelButuhJamBerurutan);
+                        $jamTersisa = ($this->mapelJamPerMinggu[$mapelId] ?? 0) - ($mapelCounter[$kelasId][$mapelId] ?? 0);
+                        $butuh2Jam = in_array($mapelId, $this->mapelButuhJamBerurutan) || $jamTersisa >= 2;
 
                         // ✅ Cek guru tersedia
                         if (empty($req['guru_options'])) continue;
@@ -288,6 +236,32 @@ class GeneticScheduler
             }
 
             $pop[] = $chrom;
+            
+            // Validasi mapel ≤2 jam tidak muncul di hari berbeda
+            foreach ($chrom as $item) {
+                $grouped = collect($chrom)
+                    ->where('kelas_id', $item['kelas_id'])
+                    ->where('mapel_id', $item['mapel_id'])
+                    ->groupBy(function ($x) {
+                        $waktu = $this->waktuList->firstWhere('id', $x['waktu_id']);
+                        return $waktu->hari ?? '??';
+                    });
+
+                if (count($grouped) > 1 && ($this->mapelJamPerMinggu[$item['mapel_id']] ?? 0) <= 2) {
+                    $hariList = implode(', ', array_keys($grouped->toArray()));
+                    Log::warning("⚠️ Mapel ID {$item['mapel_id']} (≤2 jam) di kelas {$item['kelas_id']} muncul di beberapa hari: $hariList");
+                }
+
+                // 2. Mapel 3–4 jam → maksimal 2 jam per hari
+                if ($jamPerminggu >= 3 && $jamPerminggu <= 4) {
+                    foreach ($grouped as $hari => $list) {
+                        if (count($list) > 2) {
+                            Log::warning("⚠️ Mapel ID {$mapelId} ({$jamPerminggu} jam) di kelas {$kelasId} terlalu banyak di hari $hari (" . count($list) . " jam)");
+                        }
+                    }
+                }
+            }
+
         }
     \Log::info(">> Jumlah kromosom populasi pertama: " . count($pop[0] ?? []));
 
