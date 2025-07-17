@@ -3,6 +3,7 @@ namespace App\Jobs;
 
 use App\Helpers\GeneticScheduler;
 use App\Models\Waktu;
+use App\Services\SchedulerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
