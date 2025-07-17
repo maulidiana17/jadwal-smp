@@ -11,6 +11,7 @@ class LoginController extends Controller
     //
     public function index(){
         return view('auth.login');
+        dd(auth()->guard()->getName()); // biasanya "web"
     }
 
     public function login_proses(Request $request){
