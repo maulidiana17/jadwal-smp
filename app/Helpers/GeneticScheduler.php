@@ -16,8 +16,6 @@ class GeneticScheduler
     protected $waktuPerSlot = [];
     protected $waktuByHari = [];
     protected $mapelButuhJamBerurutan = [ /* mapel_id yang butuh jam berurutan */ ];
-    protected $mapelOlahragaId = []; // ← tambahkan ini
-
 
     public function __construct($requirements, $rooms, $waktuList, $popSize=100, $crossRate=0.8, $mutRate=0.2, $gens=200,$mapelJamPerMinggu = [], $maxGuruJam = 42)
     {
@@ -26,7 +24,6 @@ class GeneticScheduler
         [$popSize, $crossRate, $mutRate, $gens];
         $this->rooms = collect($rooms); // Ubah rooms jadi Collection
         //$this ->mapelJamPerMinggu = $mapelJamPerMinggu;
-        $this->mapelOlahragaId = DB::table('mapel')->where('mapel', 'like', '%olahraga%')->pluck('id')->toArray();
         if (empty($mapelJamPerMinggu)) {
             $this->mapelJamPerMinggu = DB::table('mapel')->pluck('jam_per_minggu', 'id')->toArray();
         } else {
@@ -57,12 +54,6 @@ class GeneticScheduler
             ->map(function ($grouped) {
                 return $grouped->sortBy('jam_ke')->pluck('id')->values();
             })->toArray();
-
-        $this->mapelOlahragaId = DB::table('mapel')
-        ->where('mapel', 'like', '%olahraga%')
-        ->pluck('id')
-        ->toArray();
-
 
     }
 
@@ -202,17 +193,6 @@ class GeneticScheduler
                                     $w1->hari !== $w2->hari || abs($w1->jam_ke - $w2->jam_ke) !== 1
                                 ) continue;
 
-                                if (
-                                    in_array($waktu1, $usedWaktu) ||
-                                    in_array($waktu2, $usedWaktu) ||
-                                    !$w1 || !$w2 ||
-                                    $w1->hari !== $w2->hari ||
-                                    abs($w1->jam_ke - $w2->jam_ke) !== 1 ||
-                                    (strtolower($req['requires_ruang'] ?? '') === 'olahraga' &&
-                                        ($w1->jam_ke > 4 || $w2->jam_ke > 4))
-                                ) continue;
-
-
                                 // Jika valid, simpan
                                 $usedWaktu[] = $waktu1;
                                 $usedWaktu[] = $waktu2;
@@ -233,21 +213,12 @@ class GeneticScheduler
                             \Log::info("Tidak ditemukan slot berurutan untuk mapel_id {$mapelId} di kelas_id {$kelasId} hari {$hari}");
                             continue; // jika tidak ketemu slot 2 jam, skip mapel ini
                         }
-                        
-
 
                         // ✳️ Jika tidak butuh 2 jam
                         $availableWaktu = array_values(array_diff($waktuIdList, $usedWaktu));
                         if (empty($availableWaktu)) break;
 
                         $waktuId = $availableWaktu[0];
-                        // Ambil jam_ke
-                        $jamKe = $this->waktuList->firstWhere('id', $waktuId)->jam_ke ?? null;
-
-                        // ❗ Jika mapel olahraga, hanya boleh di jam ke 1-4
-                        if (strtolower($req['requires_ruang'] ?? '') === 'olahraga' && ($jamKe < 1 || $jamKe > 4)) {
-                            continue; // skip slot ini
-                        }
                         $usedWaktu[] = $waktuId;
 
                         $chrom[] = [
@@ -262,22 +233,6 @@ class GeneticScheduler
 
                 }
             }
-            // Validasi maksimal 4 mapel hari Jumat per kelas
-            $fridayLimit = collect($chrom)->groupBy(function ($item) {
-                $w = $this->waktuList->firstWhere('id', $item['waktu_id']);
-                return $item['kelas_id'] . '|' . ($w->hari ?? '');
-            });
-
-            foreach ($fridayLimit as $key => $items) {
-                [$kelasId, $hari] = explode('|', $key);
-                if (strtolower($hari) === 'jumat') {
-                    $jumlahMapelJumat = collect($items)->pluck('mapel_id')->unique()->count();
-                    if ($jumlahMapelJumat > 4) {
-                        Log::warning("⚠️ Kelas $kelasId memiliki lebih dari 4 mapel di hari Jumat ($jumlahMapelJumat mapel)");
-                    }
-                }
-            }
-
 
             $pop[] = $chrom;
             
@@ -376,27 +331,6 @@ class GeneticScheduler
                 }
             }
 
-            $mapelId = $g['mapel_id'];
-            $isOlahraga = false;
-            if (isset($mapelId)) {
-                $isOlahraga = strtolower(\App\Models\Mapel::find($mapelId)?->ruang_khusus ?? '') === 'olahraga';
-            }
-
-            foreach (['kelas_id', 'guru_id', 'ruangan_id'] as $key) {
-                $val = $g[$key] ?? null;
-                if (!$val) continue;
-
-                $skipConflict = $key === 'guru_id' && $isOlahraga;
-
-                if (!$skipConflict && isset($conflict[$w][$key][$val])) {
-                    $score -= 10000;
-                } else {
-                    $conflict[$w][$key][$val] = true;
-                    $score += 10;
-                }
-            }
-
-
             $load[$g['guru_id']][] = $w;
         }
 
@@ -435,22 +369,6 @@ class GeneticScheduler
                 $score -= ($maksSlot - $jumlahSlot) * 200;
             }
         }
-
-        // Penalti: lebih dari 4 mapel unik di hari Jumat
-        $fridayMapelCount = [];
-        foreach ($chrom as $item) {
-            $waktu = $this->waktuList->firstWhere('id', $item['waktu_id']);
-            if (strtolower($waktu->hari ?? '') === 'jumat') {
-                $fridayMapelCount[$item['kelas_id']][] = $item['mapel_id'];
-            }
-        }
-        foreach ($fridayMapelCount as $kelasId => $mapels) {
-            $uniqueCount = count(array_unique($mapels));
-            if ($uniqueCount > 4) {
-                $score -= ($uniqueCount - 4) * 300;
-            }
-        }
-
 
         // Bonus jika mapel berurutan benar
         foreach ($chrom as $g) {
