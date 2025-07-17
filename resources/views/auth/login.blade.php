@@ -50,6 +50,15 @@
     <h5>Welcome to Sistem Penjadwalan<br><strong>SMPN 1 GENTENG</strong></h5>
     <form action="/login_proses" method="POST">
       @csrf
+      <select name="role" class="form-control" required>
+        <option value="">-- Masuk sebagai --</option>
+        <option value="admin">Admin</option>
+        <option value="guru">Guru</option>
+        <option value="kurikulum">Kurikulum</option>
+      </select>
+      @error('role')
+        <small class="text-danger">{{ $message }}</small>
+      @enderror
       <input type="email" name="email" class="form-control" placeholder="Email" required>
       @error('email')
           <small>{($message)}</small>
@@ -58,6 +67,7 @@
       @error('password')
           <small>{($message)}</small>
       @enderror
+
       <button type="submit" class="btn btn-login btn-block w-100">LOGIN</button>
     </form>
   </div>
