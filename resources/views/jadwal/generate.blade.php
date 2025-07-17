@@ -59,7 +59,7 @@
                         </div>
 
                         <button type="submit" class="btn btn-info">Mulai Generate</button>
-                        <a href="{{ route('jadwal.hasil_generate') }}" class="btn btn-light">Kembali</a>
+                        <a href="{{ route('jadwal.index') }}" class="btn btn-light">Kembali</a>
                     </form>
 
                     <div id="loading" class="mt-4 text-info" style="display: none;">
