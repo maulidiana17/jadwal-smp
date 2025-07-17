@@ -7,9 +7,18 @@
                 <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h3>Jadwal Pelajaran</h3>
-                    <a href="{{ route('jadwal.generate') }}" class="btn btn-info">
+                    {{-- <a href="{{ route('jadwal.generate') }}" class="btn btn-info">
                         <i class="fa fa-cogs"></i> Genetic Algoritmh 
-                    </a>
+                    </a> --}}
+                    <form method="POST" action="{{ route('jadwal.generatePreview') }}">
+                        @csrf
+                        <button class="btn btn-secondary">🔍 Coba Simulasi</button>
+                    </form>
+
+                    <form method="POST" action="{{ route('jadwal.generate') }}">
+                        @csrf
+                        <button class="btn btn-primary">⚙️ Generate Jadwal (Simpan)</button>
+                    </form>
                 </div>
 
     @if($jadwals->isEmpty())

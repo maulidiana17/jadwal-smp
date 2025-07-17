@@ -13,45 +13,22 @@ class GenerateJadwalJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $requirements, $rooms, $waktuList;
+    protected $params;
 
-    public function __construct($requirements, $rooms, $waktuList)
+    public function __construct(array $params)
     {
-        $this->requirements = $requirements;
-        $this->rooms = $rooms;
-        $this->waktuList = $waktuList;
+        $this->params = $params;
     }
 
-    public function handle()
+    public function handle(SchedulerService $service)
     {
-        try {
-            // Update status ke cache
-            Cache::put("jadwal_status_{$this->userId}", 'running', 1800);
+        [$bestSchedule, $conflicts, $skipped, $fitness] = $service->generate($this->params);
+        $saved = $service->save($bestSchedule);
 
-            $waktuList = Waktu::all(); // Atau sesuai relasi
-            $scheduler = new GeneticScheduler(
-                $this->requirements,
-                $this->rooms,
-                $waktuList,
-                100, 0.8, 0.2, 300,
-                $this->mapelJamPerMinggu,
-                $this->maxGuruJam
-            );
+        Log::info("Jadwal disimpan: {$saved} entri. Fitness: {$fitness}");
 
-            $result = $scheduler->run();
-
-            // Simpan ke DB
-            foreach ($result['jadwal'] as $item) {
-                \App\Models\Jadwal::create($item);
-            }
-
-            // Sukses
-            Cache::put("jadwal_status_{$this->userId}", 'completed', 1800);
-            Cache::put("jadwal_fitness_{$this->userId}", $result['fitness'], 1800);
-        } catch (\Throwable $e) {
-            Log::error("Generate Jadwal Job error: " . $e->getMessage());
-            Cache::put("jadwal_status_{$this->userId}", 'failed', 1800);
-        }
+        // Simpan progress ke Redis, event broadcasting, dsb.
+        // Broadcast progress bisa ditambahkan di sini (Opsional)
     }
-
 }
+

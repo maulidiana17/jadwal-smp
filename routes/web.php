@@ -124,6 +124,7 @@ Route::prefix('pengampu')->name('pengampu.')->group(function () {
 //jadwal
 Route::prefix('jadwal')->name('jadwal.')->group(function () {
     Route::get('/', [JadwalController::class, 'index'])->name('index');
+    Route::post('/generate-preview', [JadwalController::class, 'generatePreview'])->name('generatePreview');
     Route::get('/generate', [JadwalController::class, 'showGenerateForm'])->name('generate');
     Route::post('/process', [JadwalController::class, 'generateProcess'])->name('process');
     Route::delete('/reset', [JadwalController::class, 'reset'])->name('reset');
