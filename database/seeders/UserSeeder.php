@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Models\Siswa;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -25,5 +26,42 @@ class UserSeeder extends Seeder
         );
 
         $user->assignRole('admin');
+        $kurikulum = User::create(
+            [
+                'email' => 'kurikulum@gmail.com',
+                'name'      => 'kurikulum',
+                'password'  => Hash::make('kurikulum'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        $kurikulum->assignRole('kurikulum');
+        $guru= User::create(
+            [
+                'email' => 'spensa@gmail.com',
+                'name'      => 'guru',
+                'password'  => Hash::make('spensa123'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        $guru->assignRole('guru');
+
+
+            $siswa = Siswa::create(
+            [
+                'nis' => '1234567890',
+                'nama_lengkap'      => 'siswa',
+                'kelas' =>'7A',
+                'no_hp' =>'6281310703603',
+                'password'  => Hash::make('1234567890'),
+                'status'=>'aktif',
+
+            ]
+        );
     }
+
+
 }
