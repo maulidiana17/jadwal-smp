@@ -2,154 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Exports\AbsensiExport;
-use App\Models\Guru;
-use App\Models\QRAbsen;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
-use Carbon\Carbon;
-use Maatwebsite\Excel\Facades\Excel;
 
 class DashboardController extends Controller
 {
-    // public function index()
-    // {
-    //     $hariini = date("Y-m-d");
-    //     $bulanini = date("m") * 1;
-    //     $tahunini = date("Y");
-    //     $nis = Auth::guard('siswa')->user()->nis;
-    //     $presensihariini = DB::table('absensi')->where('nis', $nis)->where('tgl_absen', $hariini)->first();
-    //     $historibulanini = DB::table('absensi')
-    //     ->where('nis', $nis)
-    //     ->whereMonth('tgl_absen', $bulanini)
-    //     ->whereYear('tgl_absen', $tahunini)
-    //     ->orderBy('tgl_absen')
-    //     ->get();
-
-    //     $rekappresensi = DB::table('absensi')
-    //         ->selectRaw('COUNT(nis) as jmlhadir, SUM(IF(jam_masuk > "07:00",1,0)) as jmlterlambat')
-    //         ->where('nis', $nis)
-    //         ->whereMonth('tgl_absen', $bulanini)
-    //         ->whereYear('tgl_absen', $tahunini)
-    //         ->first();
-
-    //         $namabulan = ["", "Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
-
-    //         $rekapizin = DB::table('pengajuan_izin')
-    //         ->selectRaw('SUM(IF(status="i",1,0)) as jumlahizin, SUM(IF(status="s",1,0)) as jumlahsakit')
-    //         ->where('nis', $nis)
-    //         ->whereMonth('tanggal_izin', $bulanini)
-    //         ->whereYear('tanggal_izin', $tahunini)
-    //         ->where('status_approved', 1)
-    //         ->first();
-    //     return view('dashboard.dashboard', compact('presensihariini' , 'historibulanini', 'namabulan', 'bulanini', 'tahunini', 'rekappresensi', 'rekapizin'));
-    // }
-//     public function index()
-// {
-//     $hariini = date("Y-m-d");
-//     $bulanini = date("m") * 1;
-//     $tahunini = date("Y");
-//     $nis = Auth::guard('siswa')->user()->nis;
-//     $kelas_nama = Auth::guard('siswa')->user()->kelas;
-
-//     // Mapping hari ke Bahasa Indonesia
-//     $hariMap = [
-//         'Sunday' => 'Minggu',
-//         'Monday' => 'Senin',
-//         'Tuesday' => 'Selasa',
-//         'Wednesday' => 'Rabu',
-//         'Thursday' => 'Kamis',
-//         'Friday' => 'Jumat',
-//         'Saturday' => 'Sabtu',
-//     ];
-
-//     $hariIndo = $hariMap[date('l')];
-//     $jamSekarang = date('H.i'); // format jadi 16.22 sesuai format di database
-
-//     // Data Presensi Hari Ini
-//     $presensihariini = DB::table('absensi')
-//         ->where('nis', $nis)
-//         ->where('tgl_absen', $hariini)
-//         ->first();
-
-//     // Histori Bulan Ini
-//     $historibulanini = DB::table('absensi')
-//         ->where('nis', $nis)
-//         ->whereMonth('tgl_absen', $bulanini)
-//         ->whereYear('tgl_absen', $tahunini)
-//         ->orderBy('tgl_absen')
-//         ->get();
-
-//     // Rekap Presensi
-//     $rekappresensi = DB::table('absensi')
-//         ->selectRaw('COUNT(nis) as jmlhadir, SUM(IF(jam_masuk > "07:00",1,0)) as jmlterlambat')
-//         ->where('nis', $nis)
-//         ->whereMonth('tgl_absen', $bulanini)
-//         ->whereYear('tgl_absen', $tahunini)
-//         ->first();
-
-//     // Nama Bulan
-//     $namabulan = ["", "Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
-
-//     // Rekap Izin & Sakit
-//     $rekapizin = DB::table('pengajuan_izin')
-//         ->selectRaw('SUM(IF(status="i",1,0)) as jumlahizin, SUM(IF(status="s",1,0)) as jumlahsakit')
-//         ->where('nis', $nis)
-//         ->whereMonth('tanggal_izin', $bulanini)
-//         ->whereYear('tanggal_izin', $tahunini)
-//         ->where('status_approved', 1)
-//         ->first();
-
-//     // Ambil ID kelas berdasarkan nama kelas
-//     $kelas = DB::connection('mysql_spensa')
-//         ->table('kelas')
-//         ->where('nama', $kelas_nama)
-//         ->first();
-
-//     $jadwalHariIni = [];
-//     $jadwalSedangBerlangsung = null;
-
-//     if ($kelas) {
-//         $jadwalHariIni = DB::connection('mysql_spensa')
-//             ->table('jadwal')
-//             ->join('mapel', 'jadwal.mapel_id', '=', 'mapel.id')
-//             ->join('guru', 'jadwal.guru_id', '=', 'guru.id')
-//             ->join('waktu', 'jadwal.waktu_id', '=', 'waktu.id')
-//             ->where('jadwal.kelas_id', $kelas->id)
-//             ->where('waktu.hari', $hariIndo)
-//             ->select('mapel.mapel', 'guru.nama as nama_guru', 'waktu.jam_mulai', 'waktu.jam_selesai')
-//             ->orderBy('waktu.jam_mulai')
-//             ->get();
-
-//         $jadwalSedangBerlangsung = DB::connection('mysql_spensa')
-//             ->table('jadwal')
-//             ->join('mapel', 'jadwal.mapel_id', '=', 'mapel.id')
-//             ->join('guru', 'jadwal.guru_id', '=', 'guru.id')
-//             ->join('waktu', 'jadwal.waktu_id', '=', 'waktu.id')
-//             ->where('jadwal.kelas_id', $kelas->id)
-//             ->where('waktu.hari', $hariIndo)
-//             ->where('waktu.jam_mulai', '<=', $jamSekarang)
-//             ->where('waktu.jam_selesai', '>=', $jamSekarang)
-//             ->select('mapel.mapel', 'guru.nama as nama_guru', 'waktu.jam_mulai', 'waktu.jam_selesai')
-//             ->first();
-//     }
-
-//     return view('dashboard.dashboard', compact(
-//         'presensihariini',
-//         'historibulanini',
-//         'namabulan',
-//         'bulanini',
-//         'tahunini',
-//         'rekappresensi',
-//         'rekapizin',
-//         'jadwalHariIni',
-//         'jadwalSedangBerlangsung'
-//     ));
-// }
-
 
     public function index()
     {
@@ -225,16 +84,15 @@ class DashboardController extends Controller
         $jamAkhirSekolah = strtotime('15:00');
 
         // Ambil ID kelas berdasarkan nama kelas
-        $kelas = DB::connection('mysql_spensa')
-            ->table('kelas')
-            ->where('nama', $kelas_nama)
-            ->first();
+       $kelas = DB::table('kelas')
+        ->where('nama', $kelas_nama)
+        ->first();
 
 
         if ($kelas && $jamSekarang >= $jamAwalSekolah && $jamSekarang <= $jamAkhirSekolah) {
 
-            $jadwalHariIni = DB::connection('mysql_spensa')
-                ->table('jadwal')
+            $jadwalHariIni = DB::table('jadwal')
+                // ->table('jadwal')
                 ->join('mapel', 'jadwal.mapel_id', '=', 'mapel.id')
                 ->join('guru', 'jadwal.guru_id', '=', 'guru.id')
                 ->join('waktu', 'jadwal.waktu_id', '=', 'waktu.id')
@@ -308,15 +166,7 @@ class DashboardController extends Controller
             ->where('jam_masuk', '>', '07:45')
             ->get();
 
-        // Siswa Izin rentang tanggal
-        // $siswaIzin = DB::table('pengajuan_izin')
-        //     ->join('siswa', 'pengajuan_izin.nis', '=', 'siswa.nis')
-        //     ->select('siswa.nis', 'siswa.nama_lengkap', 'pengajuan_izin.status', 'pengajuan_izin.tanggal_izin', 'pengajuan_izin.tanggal_izin_akhir')
-        //     ->whereDate('tanggal_izin', '<=', $hariini)
-        //     ->whereDate('tanggal_izin_akhir', '>=', $hariini)
-        //     ->where('status_approved', 1)
-        //     ->where('status', 'i')
-        //     ->get();
+
         $siswaIzin = DB::table('pengajuan_izin')
             ->join('siswa', 'pengajuan_izin.nis', '=', 'siswa.nis')
             ->select('siswa.nis', 'siswa.nama_lengkap', 'siswa.kelas', 'pengajuan_izin.status', 'pengajuan_izin.tanggal_izin', 'pengajuan_izin.tanggal_izin_akhir')
@@ -327,16 +177,6 @@ class DashboardController extends Controller
             ->get();
 
 
-
-        // Siswa Sakit rentang tanggal
-        // $siswaSakit = DB::table('pengajuan_izin')
-        //     ->join('siswa', 'pengajuan_izin.nis', '=', 'siswa.nis')
-        //     ->select('siswa.nis', 'siswa.nama_lengkap', 'pengajuan_izin.status', 'pengajuan_izin.tanggal_izin', 'pengajuan_izin.tanggal_izin_akhir')
-        //     ->whereDate('tanggal_izin', '<=', $hariini)
-        //     ->whereDate('tanggal_izin_akhir', '>=', $hariini)
-        //     ->where('status_approved', 1)
-        //     ->where('status', 's')
-        //     ->get();
         $siswaSakit = DB::table('pengajuan_izin')
             ->join('siswa', 'pengajuan_izin.nis', '=', 'siswa.nis')
             ->select('siswa.nis', 'siswa.nama_lengkap', 'siswa.kelas', 'pengajuan_izin.status', 'pengajuan_izin.tanggal_izin', 'pengajuan_izin.tanggal_izin_akhir')
@@ -428,3 +268,5 @@ class DashboardController extends Controller
     }
 
 }
+
+

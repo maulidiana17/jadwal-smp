@@ -137,42 +137,6 @@ class SiswaController extends Controller
     }
 
 
-//     public function aksiMassal(Request $request)
-// {
-
-//     $nisList = $request->nis;
-//     $aksi = $request->aksi;
-
-//     if (!$nisList || count($nisList) == 0) {
-//         return back()->with('error', 'Pilih minimal satu siswa untuk diproses.');
-//     }
-
-
-
-//     foreach ($nisList as $nis) {
-//         $siswa = DB::table('siswa')->where('nis', $nis)->first();
-//         if (!$siswa) continue;
-
-//         $kelas = strtoupper($siswa->kelas); // pastikan huruf besar
-//         $tingkat = (int) substr($kelas, 0, 1); // angka pertama
-//         $subkelas = strtoupper(substr($kelas, 1)); // huruf setelahnya
-
-//         if ($aksi == 'naik' && $tingkat < 9) {
-//             $kelasBaru = ($tingkat + 1) . $subkelas;
-
-//             // Jalankan update
-//     $updated = DB::table('siswa')->where('nis', $nis)->update(['kelas' => $kelasBaru]);
-
-//             DB::table('siswa')->where('nis', $nis)->update(['kelas' => $kelasBaru]);
-//         } elseif ($aksi == 'tinggal') {
-//             continue;
-//         } elseif ($aksi == 'lulus' && $tingkat == 9) {
-//             DB::table('siswa')->where('nis', $nis)->delete();
-//         }
-//     }
-
-//     return back()->with('success', 'Aksi berhasil dijalankan.');
-// }
 public function aksiMassal(Request $request)
 {
     $nisList = $request->nis;
@@ -214,36 +178,6 @@ public function alumni()
 
 
 
-    // public function aksiMassal(Request $request)
-    // {
-    //     $nisList = $request->nis;
-    //     $aksi = $request->aksi;
-
-    //     if (!$nisList || count($nisList) == 0) {
-    //         return back()->with('error', 'Pilih minimal satu siswa untuk diproses.');
-    //     }
-
-    //     foreach ($nisList as $nis) {
-    //         $siswa = DB::table('siswa')->where('nis', $nis)->first();
-    //         if (!$siswa) continue;
-
-    //         $kelas = $siswa->kelas;
-    //         $tingkat = (int) substr($kelas, 0, 1);
-    //         $subkelas = substr($kelas, 1);
-
-    //         if ($aksi == 'naik' && $tingkat < 9) {
-    //             $kelasBaru = ($tingkat + 1) . $subkelas;
-    //             DB::table('siswa')->where('nis', $nis)->update(['kelas' => $kelasBaru]);
-    //         } elseif ($aksi == 'tinggal') {
-    //             continue;
-    //         } elseif ($aksi == 'lulus' && $tingkat == 9) {
-    //             DB::table('siswa')->where('nis', $nis)->delete();
-    //         }
-    //     }
-
-    //     return back()->with('success', 'Aksi berhasil dijalankan.');
-    // }
-
     public function importForm()
     {
         return view('siswa.import');
@@ -264,3 +198,4 @@ public function alumni()
         }
     }
 }
+

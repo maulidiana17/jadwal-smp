@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Exports\LaporanPresensiExport;
+
 use App\Exports\RekapPresensiExport;
 use App\Models\QRAbsen;
-use App\Models\Siswa;
-use Carbon\Carbon;
 use DateInterval;
 use DatePeriod;
 use DateTime;
@@ -14,15 +12,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Controller\Absensi;
-use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Http;
 
 
 class AbsensiController extends Controller
+
 {
     public function create() {
         $hariini = date("Y-m-d");
@@ -223,23 +221,7 @@ class AbsensiController extends Controller
         return view('absensi.gethistori', compact('histori'));
     }
 
-//    public function showQrPresensi()
-//     {
-//         $qr = DB::table('qr_validasi')->where('tanggal', date('Y-m-d'))->first();
 
-//         if (!$qr) {
-//             // Generate baru jika belum ada untuk hari ini
-//             $kode = "ABSEN-" . date('Ymd') . "-" . Str::random(5);
-//             DB::table('qr_validasi')->insert([
-//                 'tanggal' => date('Y-m-d'),
-//                 'kode_qr' => $kode
-//             ]);
-//         } else {
-//             $kode = $qr->kode_qr;
-//         }
-
-//         return view('absensi.qr-admin', compact('kode'));
-//     }
 public function showQrPresensi()
 {
     $now = now();
@@ -270,32 +252,6 @@ public function showQrPresensi()
 }
 
 
-//     public function getQrTerbaru()
-// {
-//     $now = now();
-
-//     $qr = DB::table('qr_validasi')
-//         ->where('tanggal', date('Y-m-d'))
-//         ->where('expired_at', '>', $now)
-//         ->orderBy('created_at', 'desc')
-//         ->first();
-
-//     if (!$qr) {
-//         $kode = "ABSEN-" . date('Ymd-His') . "-" . Str::random(5);
-//         $expiredAt = $now->copy()->addSeconds(45);
-
-//         DB::table('qr_validasi')->insert([
-//             'tanggal'     => date('Y-m-d'),
-//             'kode_qr'     => $kode,
-//             'created_at'  => $now,
-//             'expired_at'  => $expiredAt
-//         ]);
-//     } else {
-//         $kode = $qr->kode_qr;
-//     }
-
-//     return response()->json(['kode' => $kode]);
-// }
 public function getQrTerbaru()
 {
     $now = now();
@@ -343,25 +299,6 @@ public function getQrTerbaru()
     ]);
 }
 
-
-
-    // public function displayQr($token)
-    // {
-    //     $tokenValid = 'qrcodeSMPN1GENTENG';
-
-    //     if ($token !== $tokenValid) {
-    //         abort(403, 'Akses Ditolak');
-    //     }
-
-    //     $qr = DB::table('qr_validasi')->where('tanggal', date('Y-m-d'))->first();
-
-    //     if (!$qr) {
-    //         return "QR Code belum digenerate oleh admin.";
-    //     }
-
-    //     $kode = $qr->kode_qr;
-    //     return view('absensi.qr-display', compact('kode'));
-    // }
     public function displayQr($token)
 {
     $tokenValid = 'qrcodeSMPN1GENTENG';
@@ -372,8 +309,6 @@ public function getQrTerbaru()
 
     return view('absensi.qr-display');
 }
-
-
 
 
     public function izin(){
@@ -487,42 +422,7 @@ public function updateizin(Request $request)
     return redirect('/absensi/izin')->with('success', 'Pengajuan berhasil diperbarui. Menunggu verifikasi ulang.');
 }
 
-    //benar
-    // public function storeizin(Request $request)
-    // {
-    //     $request->validate([
-    //         'tanggal_izin' => 'required|date',
-    //         'tanggal_izin_akhir' => 'required|date|after_or_equal:tanggal_izin',
-    //         'status' => 'required',
-    //         'keterangan' => 'required',
 
-    //     ]);
-
-    //     $nis = Auth::guard('siswa')->user()->nis;
-    //     $siswa = DB::table('siswa')->where('nis', $nis)->first();
-
-    //     $data = [
-    //         'nis' => $nis,
-    //         'nama_lengkap' => $siswa->nama_lengkap ?? null,
-    //         'kelas' => $siswa->kelas ?? null,
-    //         'tanggal_izin' => $request->tanggal_izin,
-    //         'tanggal_izin_akhir' => $request->tanggal_izin_akhir,
-    //         'status' => $request->status,
-    //         'keterangan' => $request->keterangan,
-    //     ];
-
-    //     $simpan = DB::table('pengajuan_izin')->insert($data);
-    //     if($simpan){
-    //         return redirect('/absensi/izin')->with('success', 'Pengajuan berhasil. Segera serahkan surat izin/sakit ke admin sekolah.');
-    //     }else {
-    //         return redirect('/absensi/izin')->with('error', 'Data gagal disimpan.');
-    //     }
-    // }
-
-    // public function scan()
-    // {
-    //     return view('absensi.scan');
-    // }
     public function scan()
     {
         $user = Auth::guard('siswa')->user();
@@ -606,38 +506,6 @@ public function updateizin(Request $request)
 
         return response()->json(['hadir' => $sudahHadir]);
     }
-    // public function getStatusHadir(Request $request)
-    // {
-    //     $user = Auth::guard('siswa')->user();
-    //     $nis = $user->nis ?? null;
-    //     $mapel = $request->query('mapel');
-
-    //     if (!$nis || !$mapel) {
-    //         return response()->json(['error' => 'Data tidak lengkap'], 400);
-    //     }
-
-    //     $tanggal = now()->toDateString();
-
-    //     // Cek apakah sudah absen
-    //     $sudahHadir = QRAbsen::where('nis', $nis)
-    //         ->whereRaw('LOWER(mapel) = ?', [strtolower($mapel)])
-    //        // ->where('mapel', $mapel)
-    //         ->whereDate('waktu', $tanggal)
-    //         ->exists();
-
-    //     // Cek apakah izin atau sakit hari ini
-    //     $izin = DB::table('pengajuan_izin')
-    //         ->where('nis', $nis)
-    //         ->where('tanggal_izin', $tanggal)
-    //         ->where('status_approved', 1)
-    //         ->first();
-
-    //     return response()->json([
-    //         'hadir' => $sudahHadir,
-    //         'izin' => $izin && $izin->status === 'i' ? true : false,
-    //         'sakit' => $izin && $izin->status === 's' ? true : false,
-    //     ]);
-    // }
 
 
     public function success()
@@ -666,25 +534,6 @@ public function updateizin(Request $request)
     }
 
 
-    // public function getNotifikasi()
-    // {
-    //     $data = DB::table('pengajuan_izin')
-    //         ->join('siswa', 'pengajuan_izin.nis', '=', 'siswa.nis')
-    //         ->where('pengajuan_izin.status_approved', '0')
-    //         ->orderBy('pengajuan_izin.tanggal_izin', 'desc')
-    //         ->select(
-    //             'siswa.nama_lengkap',
-    //             'pengajuan_izin.tanggal_izin',
-    //             DB::raw("CASE
-    //                         WHEN pengajuan_izin.status = 'i' THEN 'izin'
-    //                         WHEN pengajuan_izin.status = 's' THEN 'sakit'
-    //                         ELSE 'lainnya'
-    //                     END as jenis_pengajuan")
-    //         )
-    //         ->get();
-
-    //     return response()->json($data);
-    // }
     public function getNotifikasi()
 {
     $data = DB::table('pengajuan_izin')
@@ -757,13 +606,7 @@ public function updateizin(Request $request)
 
         $kelasGroup = [];
 
-        //foreach ($kelasData as $kelas) {
-        //   $tingkat = explode(' ', $kelas)[0];
-        //  if (!isset($kelasGroup[$tingkat])) {
-        //     $kelasGroup[$tingkat] = [];
-        // }
-        // $kelasGroup[$tingkat][] = $kelas;
-        // }
+
         foreach ($kelasData as $kelas) {
             $tingkat = substr($kelas, 0, 1); // Ambil angka tingkat: 7, 8, atau 9
             $label = "Kelas $tingkat";
@@ -1063,18 +906,7 @@ public function updateizin(Request $request)
             return view('absensi.cetakrekap', compact('bulan', 'tahun', 'rekap', 'kelas', 'namabulan', 'jumlahHari', 'tanggalMerah', 'izinSakit', 'izinPerTanggal', 'rentangIzinSakit', 'izinRentangPerSiswa'));
     }
 
-        // public function izinsakit(Request $request)
-        // {
-        //     $query = DB::table('pengajuan_izin')
-        //     ->join('siswa','pengajuan_izin.nis', '=', 'siswa.nis')
-        //     ->orderBy('tanggal_izin','desc');
-        //      if (!empty($request->nama_siswa)) {
-        //             $query->where('siswa.nama_lengkap', 'like', '%' . $request->nama_siswa . '%');
-        //         }
 
-        //     $izinsakit = $query->paginate(5);
-        //     return view('absensi.izinsakit', compact('izinsakit'));
-        // }
         public function izinsakit(Request $request)
         {
             $query = DB::table('pengajuan_izin')
@@ -1141,7 +973,5 @@ public function updateizin(Request $request)
                 return Redirect::back()->with(['warning' => 'Data gagal dihapus']);
             }
         }
-
-
-
 }
+

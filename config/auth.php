@@ -44,6 +44,10 @@ return [
             'driver' => 'session',
             'provider' => 'siswa',
         ],
+         'kurikulum' => [
+            'driver' => 'session',
+            'provider' => 'users',
+        ],
     ],
     'providers' => [
         'users' => [
@@ -54,6 +58,11 @@ return [
             'driver' => 'eloquent',
             'model' => App\Models\Siswa::class,
         ],
+         'kurikulum' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\User::class,
+        ],
+
     ],
 
     /*

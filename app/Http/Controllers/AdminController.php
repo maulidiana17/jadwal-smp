@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -71,11 +72,12 @@ class AdminController extends Controller
 
      public function kelas()
     {
-        $kelas = DB::connection('mysql_spensa')
-            ->table('kelas')
+        $kelas = DB::table('kelas')
+            // ->table('kelas')
             ->orderBy('nama')
             ->get();
 
         return view('absensi.kelas', compact('kelas'));
     }
 }
+

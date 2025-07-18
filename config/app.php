@@ -69,7 +69,8 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    // 'timezone' => 'UTC',
+    'timezone' => 'Asia/Jakarta',
 
     /*
     |--------------------------------------------------------------------------
@@ -213,6 +214,6 @@ return [
         // 'ExampleClass' => App\Example\ExampleClass::class,
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,
     ])->toArray(),
-    
+
 
 ];
