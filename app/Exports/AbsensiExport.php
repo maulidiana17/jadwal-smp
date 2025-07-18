@@ -27,8 +27,7 @@ class AbsensiExport implements FromCollection, WithHeadings
 
     public function collection()
     {
-        $jadwal = DB::connection('mysql_spensa')
-            ->table('jadwal')
+        $jadwal = DB::table('jadwal')
             ->join('kelas', 'jadwal.kelas_id', '=', 'kelas.id')
             ->join('mapel', 'jadwal.mapel_id', '=', 'mapel.id')
             ->where('jadwal.guru_id', auth()->user()->guru->id)

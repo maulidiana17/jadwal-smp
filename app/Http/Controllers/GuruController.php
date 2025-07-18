@@ -94,7 +94,7 @@ class GuruController extends Controller
         }
 
         $user = Auth::user();
-        $guru = Guru::where('user_id', $user->id)->first();
+        $guru = Guru::where('id', $guru->id)->first();
 
         if (!$guru) {
             abort(404, 'Data guru tidak ditemukan.');
@@ -272,7 +272,7 @@ class GuruController extends Controller
         $akhir = Carbon::parse($request->tanggal_akhir)->endOfDay();
 
         $user = Auth::user();
-        $guru = Guru::where('user_id', $user->id)->firstOrFail();
+        $guru = Guru::where('id', $guru->id)->firstOrFail();
 
         $kelasDiajar = DB::table('jadwal')
             // ->table('jadwal')
@@ -291,7 +291,7 @@ class GuruController extends Controller
     public function downloadQr()
     {
         $user = Auth::user();
-        $guru = Guru::where('user_id', $user->id)->first();
+        $guru = Guru::where('id', $guru->id)->first();
 
         if (!$guru) {
             abort(404, 'Data guru tidak ditemukan.');
@@ -326,7 +326,7 @@ class GuruController extends Controller
             abort(403, 'Akses ditolak.');
         }
 
-        $guru = Guru::where('user_id', $user->id)->first();
+        $guru = Guru::where('id', $guru)->first();
 
         if (!$guru) {
             abort(404, 'Data guru tidak ditemukan.');
@@ -497,7 +497,7 @@ class GuruController extends Controller
 
         // Ambil data guru & mapel yang diajar hari ini
         $user = Auth::user();
-        $guru = Guru::where('user_id', $user->id)->first();
+        $guru = Guru::where('id', $guru->id)->first();
         if (!$guru) {
             return back()->with('error', 'Guru tidak ditemukan.');
         }
