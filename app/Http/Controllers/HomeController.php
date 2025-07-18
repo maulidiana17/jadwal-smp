@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Auth;
 class HomeController extends Controller
 {
     public function dashboard(){
-        return view('dashboard', [
+        return view('dashboardkurikulum', [
         'jumlahGuru' => Guru::count(),
         'jumlahRuangan' => Ruangan::count(),
         'jumlahKelas' => Kelas::count(),
@@ -51,7 +51,7 @@ class HomeController extends Controller
     }
 
     public function store(Request $request){
-    
+
          // Validasi jika perlu
     $validator = validator::make($request->all(),[
         'name' => 'required',
@@ -103,7 +103,7 @@ class HomeController extends Controller
         $data['password']   =Hash::make($request->password);
     }
     $data['role']           =$request->role;
-   
+
 
     User::whereId($id)->update($data);
 
