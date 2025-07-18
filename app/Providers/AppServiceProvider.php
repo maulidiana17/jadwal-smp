@@ -19,9 +19,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Paginator::currentPathResolver(function () {
-            return $this->app['url']->current();
-        });
 
         if (app()->isProduction()) {
             URL::forceRootUrl(config('app.url'));
