@@ -89,8 +89,9 @@ class GuruController extends Controller
     {
         $hariini = Carbon::today()->toDateString();
 
-        if (Auth::user()->role !== 'guru') {
-            abort(403, 'Akses ditolak.');
+         if (auth()->user()->hasRole('guru')) {
+            abort(403, 'Akses hanya untuk guru.');
+            return $next($request);
         }
 
         $user = Auth::user();
@@ -322,8 +323,12 @@ class GuruController extends Controller
 
         $user = Auth::user();
 
-        if ($user->role !== 'guru') {
-            abort(403, 'Akses ditolak.');
+        // if ($user->role !== 'guru') {
+        //     abort(403, 'Akses ditolak.');
+        // }
+         if (auth()->user()->hasRole('guru')) {
+            abort(403, 'Akses hanya untuk guru.');
+            return $next($request);
         }
 
         $guru = Guru::where('id', $guru)->first();

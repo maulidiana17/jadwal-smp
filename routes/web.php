@@ -226,7 +226,7 @@ Route::post('/konfigurasi/updatelokasisekolah', [KonfigurasiController::class, '
 Route::middleware(['auth', 'guru'])->group(function () {
     Route::get('/dashboardguru', [DashboardController::class, 'dashboardguru']);
     Route::get('/qr', [GuruController::class, 'qr']);
-    Route::get('/dashboardguru', [GuruController::class, 'qrIndex']);
+    Route::get('/dashboardguruqr', [GuruController::class, 'qrIndex']);
     Route::get('/download-qr', [GuruController::class, 'downloadQr'])->name('guru.qr.download');
     //Route::get('/absensi/export-excel', [GuruController::class, 'exportExcel'])->name('absensi.exportExcel');
     Route::get('/qr/export', [GuruController::class, 'exportExcel'])->name('qr.export');
