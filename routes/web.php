@@ -239,7 +239,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
     // Guru
     Route::get('/guru', [GuruController::class, 'index'])->name('guru.index');
-    Route::post('/guru', [GuruController::class, 'store'])->name('guru.store');
+    // Route::post('/guru', [GuruController::class, 'store'])->name('guru.store');
     Route::get('/guru/{guru}', [GuruController::class, 'edit'])->name('guru.edit');
     Route::put('/guru/{guru}', [GuruController::class, 'update'])->name('guru.update');
     Route::delete('/guru/{guru}', [GuruController::class, 'destroy'])->name('guru.destroy');
