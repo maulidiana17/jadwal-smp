@@ -52,7 +52,7 @@ class DashboardController extends Controller
             ->whereYear('tgl_absen', $tahunini)
             ->orderBy('tgl_absen')
             ->paginate(5);
-            // ->get();
+        // ->get();
 
         // Rekap Presensi
         $rekappresensi = DB::table('absensi')
@@ -63,7 +63,7 @@ class DashboardController extends Controller
             ->first();
 
         // Nama Bulan
-        $namabulan = ["", "Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+        $namabulan = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
         // Rekap Izin & Sakit
         $rekapizin = DB::table('pengajuan_izin')
@@ -84,9 +84,9 @@ class DashboardController extends Controller
         $jamAkhirSekolah = strtotime('15:00');
 
         // Ambil ID kelas berdasarkan nama kelas
-       $kelas = DB::table('kelas')
-        ->where('nama', $kelas_nama)
-        ->first();
+        $kelas = DB::table('kelas')
+            ->where('nama', $kelas_nama)
+            ->first();
 
 
         if ($kelas && $jamSekarang >= $jamAwalSekolah && $jamSekarang <= $jamAkhirSekolah) {
@@ -125,16 +125,15 @@ class DashboardController extends Controller
             'rekapizin',
             'jadwalHariIni',
             'jadwalSedangBerlangsung',
-             'statusIzinHariIni'
+            'statusIzinHariIni'
         ));
     }
 
     public function dashboardadmin()
     {
-        if (Auth::user()->role !== 'admin') {
-            abort(403, 'Akses ditolak.');
+        if (auth()->user()->roles[0]->pivot['role_id'] != '1') {
+            return Auth::user()->role;
         }
-
         $hariini = date("Y-m-d");
 
         // Rekap Hadir dan Terlambat
@@ -219,11 +218,12 @@ class DashboardController extends Controller
         ";
 
         $query = DB::table('siswa')
-        ->select(
-            'siswa.nis',
-            'siswa.nama_lengkap',
-            'siswa.kelas',
-            DB::raw('
+            ->select(
+                'siswa.nis',
+                'siswa.nama_lengkap',
+                'siswa.kelas',
+                DB::raw(
+                    '
                 CASE
                     WHEN absensi.jam_masuk IS NOT NULL AND absensi.jam_masuk <= "07:45" THEN "Hadir"
                     WHEN absensi.jam_masuk IS NOT NULL AND absensi.jam_masuk > "07:45" THEN "Terlambat"
@@ -231,21 +231,21 @@ class DashboardController extends Controller
                     WHEN pengajuan_izin.status = "s" THEN "Sakit"
                     ELSE "Belum Hadir"
                 END as keterangan'
-            ),
-            'absensi.jam_masuk'
-        )
-        ->leftJoin('absensi', function($join) use ($hariini){
-            $join->on('absensi.nis', '=', 'siswa.nis')
-                ->where('absensi.tgl_absen', $hariini);
-        })
-        ->leftJoin('pengajuan_izin', function($join) use ($hariini){
-            $join->on('pengajuan_izin.nis', '=', 'siswa.nis')
-                ->where('pengajuan_izin.status_approved', 1)
-                ->whereDate('pengajuan_izin.tanggal_izin', '<=', $hariini)
-                ->whereDate('pengajuan_izin.tanggal_izin_akhir', '>=', $hariini);
-        })
-        ->orderByRaw($orderQuery)
-        ->orderBy('siswa.nama_lengkap', 'asc');
+                ),
+                'absensi.jam_masuk'
+            )
+            ->leftJoin('absensi', function ($join) use ($hariini) {
+                $join->on('absensi.nis', '=', 'siswa.nis')
+                    ->where('absensi.tgl_absen', $hariini);
+            })
+            ->leftJoin('pengajuan_izin', function ($join) use ($hariini) {
+                $join->on('pengajuan_izin.nis', '=', 'siswa.nis')
+                    ->where('pengajuan_izin.status_approved', 1)
+                    ->whereDate('pengajuan_izin.tanggal_izin', '<=', $hariini)
+                    ->whereDate('pengajuan_izin.tanggal_izin_akhir', '>=', $hariini);
+            })
+            ->orderByRaw($orderQuery)
+            ->orderBy('siswa.nama_lengkap', 'asc');
 
 
         $datasiswa = $query->paginate(10);
@@ -263,10 +263,8 @@ class DashboardController extends Controller
         ));
     }
 
-    public function dashboardguru() {
+    public function dashboardguru()
+    {
         return view('dashboard.dashboardguru');
     }
-
 }
-
-

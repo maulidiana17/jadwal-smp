@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-
+use Spatie\Permission\Models\Role;
 
 class LoginController extends Controller
 {
@@ -78,51 +78,63 @@ class LoginController extends Controller
         return view('auth.login');
     }
     public function login_proses(Request $request)
-{
-    $loginSebagai = $request->login_sebagai;
+    {
+        if ($request->input('login_sebagai') === 'siswa') {
+            $credentials = $request->validate([
+                'nis' => 'required',
+                'password_siswa' => 'required',
+            ]);
 
-    if ($loginSebagai === 'siswa') {
-        $credentials = $request->only('nis', 'password_siswa');
+            if (Auth::guard('siswa')->attempt(['nis' => $credentials['nis'], 'password' => $credentials['password_siswa']])) {
+                return redirect('/dashboard');
+            }
 
-        if (Auth::guard('siswa')->attempt([
-            'nis' => $credentials['nis'],
-            'password' => $credentials['password_siswa']
-        ])) {
-            return redirect('/dashboard');
+            return back()->withErrors([
+                'nis' => 'NIS atau Password yang Anda masukkan salah.',
+            ])->onlyInput('nis');
+        } else {
+            $credentials = $request->validate([
+                'email' => 'required|email',
+                'password' => 'required',
+            ]);
+
+            if (Auth::attempt($credentials)) {
+                $user = Auth::user();
+
+                // return auth()->user()->roles[0]->pivot['role_id'];
+
+                if (auth()->user()->hasRole('admin')) {
+                    return redirect('/dashboardadmin');
+                } elseif (auth()->user()->hasRole('kurikulum')) {
+                    return redirect('/dashboardkurikulum');
+                } elseif (auth()->user()->hasRole('guru')) {
+                    return redirect('/dashboardguru');
+                }
+
+                // switch ($user->role) {
+                //     case 'admin':
+                //         return redirect('/dashboardadmin');
+                //     case 'guru':
+                //         return redirect('/dashboardguru');
+                //     case 'kurikulum':
+                //         return redirect('/dashboardkurikulum');
+                //     default:
+                //         return redirect('/dashboard');
+                // }
+            }
+
+            return back()->withErrors([
+                'email' => 'Email atau Password yang Anda masukkan salah.',
+            ])->onlyInput('email');
         }
-
-        return redirect()->back()->with('failed', 'Login Siswa Gagal!');
     }
 
-    // login admin/guru/kurikulum (guard: web)
-    $credentials = $request->only('email', 'password');
-
-   if (Auth::attempt($credentials)) {
-        $user = Auth::user();
-
-        // Arahkan sesuai role
-        switch ($user->role) {
-            case 'admin':
-                return redirect('/dashboardadmin');
-            case 'guru':
-                return redirect('/dashboardguru');
-            case 'kurikulum':
-                return redirect('/dashboardkurikulum');
-            default:
-                return redirect('/dashboard'); // fallback
-        }
-    }
-
-    return redirect()->back()->with('failed', 'Login Gagal!');
-}
-  public function logout(Request $request)
+    public function logout(Request $request)
     {
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login'); // arahkan ke route login
+        return redirect()->route('login');
     }
 }
-
-

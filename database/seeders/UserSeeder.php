@@ -14,7 +14,7 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        User::firstOrCreate(
+        $user = User::create(
             [
                 'email' => 'dini123@gmail.com',
                 'name'      => 'admin',
@@ -23,5 +23,7 @@ class UserSeeder extends Seeder
                 'updated_at' => now(),
             ]
         );
+
+        $user->assignRole('admin');
     }
 }
