@@ -49,21 +49,6 @@ return [
             'provider' => 'users',
         ],
     ],
-    'providers' => [
-        'users' => [
-            'driver' => 'eloquent',
-            'model' => App\Models\User::class,
-        ],
-        'siswa' => [
-            'driver' => 'eloquent',
-            'model' => App\Models\Siswa::class,
-        ],
-         'kurikulum' => [
-            'driver' => 'eloquent',
-            'model' => App\Models\User::class,
-        ],
-
-    ],
 
     /*
     |--------------------------------------------------------------------------
@@ -82,17 +67,22 @@ return [
     |
     */
 
-    // 'providers' => [
-    //     'users' => [
-    //         'driver' => 'eloquent',
-    //         'model' => App\Models\User::class,
-    //     ],
+    
+    'providers' => [
+        'users' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\User::class,
+        ],
+        'siswa' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Siswa::class,
+        ],
+         'kurikulum' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\User::class,
+        ],
 
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
-    // ],
+    ],
 
     /*
     |--------------------------------------------------------------------------
