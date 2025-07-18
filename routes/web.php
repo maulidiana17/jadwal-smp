@@ -57,14 +57,6 @@ Route::prefix('user')->name('user.')->group(function () {
     Route::put('/update/{id}', [HomeController::class,'update'])->name('update');
     Route::delete('/delete/{id}', [HomeController::class,'delete'])->name('delete');
 });
-// Route::prefix('user')->name('user.')->group(function () {
-//     Route::get('/', [HomeController::class,'index'])->name('index');
-//     Route::get('/create', [HomeController::class,'create'])->name('create');
-//     Route::post('/store', [HomeController::class,'store'])->name('store');
-//     Route::get('/edit/{id}', [HomeController::class,'edit'])->name('edit');
-//     Route::put('/update/{id}', [HomeController::class,'update'])->name('update');
-//     Route::delete('/delete/{id}', [HomeController::class,'delete'])->name('delete');
-// });
 
 // GURU
 Route::prefix('guru')->name('guru.')->group(function () {
@@ -164,7 +156,7 @@ Route::prefix('jadwal')->name('jadwal.')->group(function () {
 
 });
 
-// 🔐 Khusus admin saja
+// Khusus admin saja
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::prefix('user')->name('user.')->group(function () {
         Route::get('/', [HomeController::class,'index'])->name('index');
@@ -181,7 +173,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     });
 });
 
-//Middleware login admin dan guru
+//Middleware login admin dan guru_dini
     Route::middleware(['auth', 'admin'])->group(function () {
         Route::get('/dashboardadmin', [DashboardController::class, 'dashboardadmin']);
     });
