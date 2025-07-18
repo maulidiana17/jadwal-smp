@@ -186,17 +186,17 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/dashboardadmin', [DashboardController::class, 'dashboardadmin']);
     });
 
-    // Route::middleware(['auth', 'guru'])->group(function () {
-    //     Route::get('/dashboardguru', [DashboardController::class, 'dashboardguru']);
-    //     Route::get('/qr', [GuruController::class, 'qr']);
-    //     Route::get('/dashboardguru', [GuruController::class, 'qrIndex']);
-    //     Route::get('/download-qr', [GuruController::class, 'downloadQr'])->name('guru.qr.download');
-    //     //Route::get('/absensi/export-excel', [GuruController::class, 'exportExcel'])->name('absensi.exportExcel');
-    //     Route::get('/qr/export', [GuruController::class, 'exportExcel'])->name('qr.export');
-    //     Route::get('/qr/export-mingguan', [GuruController::class, 'exportMingguan'])->name('qr.export.mingguan');
-    //     Route::get('/qr/export-mingguan-manual', [GuruController::class, 'exportMingguanManual'])->name('qr.export.mingguan.manual');
-    //     //Route::get('/absensi/hari-ini', [GuruController::class, 'getSiswaAbsenHariIni'])->name('absensi.hariini');
-    // });
+    Route::middleware(['auth', 'guru'])->group(function () {
+        Route::get('/dashboardguru', [DashboardController::class, 'dashboardguru']);
+        Route::get('/qr', [GuruController::class, 'qr']);
+        Route::get('/dashboardguru', [GuruController::class, 'qrIndex']);
+        Route::get('/download-qr', [GuruController::class, 'downloadQr'])->name('guru.qr.download');
+        //Route::get('/absensi/export-excel', [GuruController::class, 'exportExcel'])->name('absensi.exportExcel');
+        Route::get('/qr/export', [GuruController::class, 'exportExcel'])->name('qr.export');
+        Route::get('/qr/export-mingguan', [GuruController::class, 'exportMingguan'])->name('qr.export.mingguan');
+        Route::get('/qr/export-mingguan-manual', [GuruController::class, 'exportMingguanManual'])->name('qr.export.mingguan.manual');
+        //Route::get('/absensi/hari-ini', [GuruController::class, 'getSiswaAbsenHariIni'])->name('absensi.hariini');
+    });
   //Middleware absen siswa
     Route::middleware(['auth:siswa'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index']);
@@ -238,11 +238,11 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::delete('/admin/{admin}', [AdminController::class, 'destroy'])->name('admin.destroy');
 
     // Guru
-    Route::get('/guru', [GuruController::class, 'index'])->name('guru.index');
+    //Route::get('/guru', [GuruController::class, 'index'])->name('guru.index');
     // Route::post('/guru', [GuruController::class, 'store'])->name('guru.store');
-    Route::get('/guru/{guru}', [GuruController::class, 'edit'])->name('guru.edit');
-    Route::put('/guru/{guru}', [GuruController::class, 'update'])->name('guru.update');
-    Route::delete('/guru/{guru}', [GuruController::class, 'destroy'])->name('guru.destroy');
+    //Route::get('/guru/{guru}', [GuruController::class, 'edit'])->name('guru.edit');
+    //Route::put('/guru/{guru}', [GuruController::class, 'update'])->name('guru.update');
+    //Route::delete('/guru/{guru}', [GuruController::class, 'destroy'])->name('guru.destroy');
       Route::post('/ubah-absen-alfa', [GuruController::class, 'ubahKeAlfa'])->name('ubah.absen.alfa');
     Route::post('/ubah-absen-hadir', [GuruController::class, 'ubahKeHadir'])->name('ubah.absen.hadir');
 
