@@ -10,7 +10,7 @@ class UserRoleSeeder extends Seeder
 {
     public function run(): void
     {
-        $admin = User::where('email', 'admin@example.com')->first(); // Ganti dengan email admin Anda
+        $admin = User::where('email', 'dini123@gmail.com')->first(); // Ganti dengan email admin Anda
         if ($admin) {
             $admin->assignRole('admin');
         }
