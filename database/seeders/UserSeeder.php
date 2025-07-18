@@ -16,7 +16,7 @@ class UserSeeder extends Seeder
     {
         User::firstOrCreate(
             [
-                'email' => 'kuri123@gmail.com',
+                'email' => 'kuri1234@gmail.com',
                 'name'      => 'kurikulum',
                 'password'  => Hash::make('kuri123'),
                 'created_at' => now(),
