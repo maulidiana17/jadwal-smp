@@ -12,8 +12,10 @@ class AdminController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::where('role', 'admin');
-        $admins = $query->paginate(10);
+        // $query = User::where('role', 'admin');
+                $admins = User::role('admin')->get();
+
+        // $admins = $query->paginate(10);
 
         return view('admin.index', compact('admins'));
     }

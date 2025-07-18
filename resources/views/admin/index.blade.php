@@ -224,7 +224,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                         <tbody>
                                             @foreach($admins as $admin)
                                             <tr>
-                                                <td>{{ $loop->iteration + $admins->firstItem() - 1 }}</td>
+                                                <td>{{ $loop->iteration }}</td>
                                                 <td>{{ $admin->name }}</td>
                                                 <td>{{ $admin->email }}</td>
                                                 <td>
@@ -251,7 +251,6 @@ document.addEventListener('DOMContentLoaded', function () {
                                     </table>
 
                                     <div class="mt-3">
-                                        {{ $admins->links('vendor.pagination.bootstrap-5') }}
                                     </div>
                                 </div>
                             </div>
