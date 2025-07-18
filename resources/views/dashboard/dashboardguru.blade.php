@@ -7,17 +7,17 @@
                     <div class="card card-round">
                         <div class="card-body">
                             <h3 class="fw-bold mb-3">Dashboard Guru</h3>
-                            @if(Auth::user()->role === 'guru')
-                            <span class="fw-bold">Halo Guru {{ Auth::user()->name }}</span>
-                            @elseif(Auth::user()->role === 'admin')
-                            <span class="fw-bold">Selamat datang Admin {{ Auth::user()->name }}</span>
+                            @if (auth()->user()->hasRole('guru'))
+                            <span class="fw-bold">Halo Guru {{ Auth::user()->nama }}</span>
+                            {{-- @elseif(Auth::user()->role === 'admin')
+                            <span class="fw-bold">Selamat datang Admin {{ Auth::user()->name }}</span> --}}
                             @endif
                         </div>
                         <div class="card">
                             <div class="card-body">
                                 <h4 class="fw-bold mb-3">Jadwal Mengajar Selama Seminggu</h4>
 
-                                @if(count($jadwalMengajarMinggu) > 0)
+                                @if(count($jadwalMengajarMinggu ?? []) > 0)
                                     @foreach($jadwalMengajarMinggu as $hari => $jadwals)
                                         <h5 class="mt-3">{{ ucfirst($hari) }}</h5>
                                         <ul class="list-group mt-2">
@@ -169,7 +169,7 @@
 
                             @if($siswaSakit->count() > 0)
                             <div class="table-responsive mt-2">
-                                {{--  <table class="table table-bordered">  --}}
+                              
                                 <table class="table table-striped table-striped-bg-black mt-3 table-hover">
                                     <thead>
                                         <tr>

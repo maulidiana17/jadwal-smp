@@ -84,18 +84,19 @@ class GuruController extends Controller
     return redirect()->route('guru.index')->with('success', 'Data guru berhasil diimpor.');
     }
 
-       //fiks benar
-    public function qr()
+      
+   public function qr()
     {
         $hariini = Carbon::today()->toDateString();
 
-         if (auth()->user()->hasRole('guru')) {
-            abort(403, 'Akses hanya untuk guru.');
-            return $next($request);
-        }
+        if (!Auth::user()->hasRole('guru')) {
+    abort(403, 'Akses ditolak.');
+    }
+
 
         $user = Auth::user();
-        $guru = Guru::where('id', $guru->id)->first();
+     $guru = Guru::where('email', Auth::user()->email)->first();
+
 
         if (!$guru) {
             abort(404, 'Data guru tidak ditemukan.');
@@ -238,7 +239,6 @@ class GuruController extends Controller
             'daftarSiswaKelasHariIni'));
     }
 
-
     public function exportExcel(Request $request)
     {
         $request->validate([
@@ -323,15 +323,14 @@ class GuruController extends Controller
 
         $user = Auth::user();
 
-        // if ($user->role !== 'guru') {
-        //     abort(403, 'Akses ditolak.');
-        // }
-         if (auth()->user()->hasRole('guru')) {
-            abort(403, 'Akses hanya untuk guru.');
-            return $next($request);
+          
+        $guru = Guru::where('email', Auth::user()->email)->first();
+
+
+        if (!$guru) {
+            abort(404, 'Data guru tidak ditemukan.');
         }
 
-        $guru = Guru::where('id', $guru)->first();
 
         if (!$guru) {
             abort(404, 'Data guru tidak ditemukan.');

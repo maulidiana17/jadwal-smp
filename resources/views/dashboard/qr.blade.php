@@ -12,7 +12,7 @@
                 <div class="card card-stats card-round">
                     <div class="card-body">
                         <h2>QR Code untuk Mapel: {{ $guru->mapel }}</h2>
-                        <p><strong>Nama:</strong> {{ $guru->user->name }}</p>
+                        <p><strong>Nama:</strong> {{ $guru->nama }}</p>
                         <p><strong>NIP:</strong> {{ $guru->nip }}</p>
                         <div id="qr-code-container" class="my-4">
                             {!! $qrCode !!}

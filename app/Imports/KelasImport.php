@@ -16,7 +16,7 @@ class KelasImport implements ToModel, WithHeadingRow
     public function model(array $row)
     {
         return new Kelas([
-            'nama' => $row['kelas'],
+            'nama' => $row['nama'],
             'tingkat_kelas' => $row['tingkat_kelas'],
         ]);
     }

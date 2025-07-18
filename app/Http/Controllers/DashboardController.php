@@ -265,6 +265,7 @@ class DashboardController extends Controller
 
     public function dashboardguru()
     {
-        return view('dashboard.dashboardguru');
+      
+            return app(GuruController::class)->qrIndex();
     }
 }
