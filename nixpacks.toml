@@ -1,4 +1,5 @@
 [phases.build]
 cmds = [
-  'if [ ! -L "public/storage" ]; then php artisan storage:link; fi'
+  'rm -rf public/storage',
+  'php artisan storage:link'
 ]
