@@ -5,12 +5,10 @@
       <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row pt-2 pb-4">
         <div>
           <h3 class="fw-bold mb-3">Dashboard Admin</h3>
+            @if(Auth::check() && Auth::user()->hasRole('admin'))
+                <span class="fw-bold">Selamat datang Admin {{ Auth::user()->name }}</span>
+            @endif
 
-          @if(Auth::user()->role === 'guru')
-          <span class="fw-bold">Halo Guru {{ Auth::user()->name }}</span>
-      @elseif(Auth::user()->role === 'admin')
-          <span class="fw-bold">Selamat datang Admin {{ Auth::user()->name }}</span>
-      @endif
         </div>
 
       </div>

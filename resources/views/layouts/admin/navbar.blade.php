@@ -63,14 +63,14 @@
                     </div>
                     <span class="profile-username">
                       <span class="op-7">Hi,</span>
+                        @php
+                            $user = \App\Models\User::where('email', Auth::user()->email)->first();
+                        @endphp
 
-                      @if (Auth::check())
-                        @if (Auth::user()->role === 'admin')
-                            <span class="fw-bold text-primary">{{ Auth::user()->name }} (Admin)</span>
-                        @elseif (Auth::user()->role === 'guru')
-                            <span class="fw-bold text-success">{{ Auth::user()->name }} (Guru)</span>
+                        @if ($user)
+                            <span class="fw-bold text-success">{{ $user->name }} (Admin)</span>
                         @endif
-                      @endif
+
                     </span>
                   </a>
                   <ul class="dropdown-menu dropdown-user animated fadeIn">

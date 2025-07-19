@@ -7,10 +7,8 @@
                     <div class="card card-round">
                         <div class="card-body">
                             <h3 class="fw-bold mb-3">Dashboard Guru</h3>
-                            @if (auth()->user()->hasRole('guru'))
-                            <span class="fw-bold">Halo Guru {{ Auth::user()->nama }}</span>
-                            {{-- @elseif(Auth::user()->role === 'admin')
-                            <span class="fw-bold">Selamat datang Admin {{ Auth::user()->name }}</span> --}}
+                            @if(Auth::check() && Auth::user()->hasRole('guru'))
+                                <span class="fw-bold">Selamat datang Guru {{ Auth::user()->nama }}</span>
                             @endif
                         </div>
                         <div class="card">
@@ -169,7 +167,7 @@
 
                             @if($siswaSakit->count() > 0)
                             <div class="table-responsive mt-2">
-                              
+
                                 <table class="table table-striped table-striped-bg-black mt-3 table-hover">
                                     <thead>
                                         <tr>
