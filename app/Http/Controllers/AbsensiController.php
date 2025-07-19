@@ -258,10 +258,8 @@ public function getQrTerbaru()
     $jamSekarang = $now->format('H:i');
 
     // Atur waktu buka dan tutup presensi
-    // $jamBuka  = '05:00';
-    // $jamTutup = '07:45';
     $jamBuka  = '05:00';
-    $jamTutup = '21:45';
+    $jamTutup = '10:00';
 
     // Cek apakah sekarang di luar jam presensi
     if ($jamSekarang < $jamBuka || $jamSekarang > $jamTutup) {
@@ -280,7 +278,7 @@ public function getQrTerbaru()
         ->first();
 
     if (!$qr) {
-        $kode = "ABSEN-" . date('Ymd-His') . "-" . Str::random(5);
+        $kode = "ABSEN-" . date('Ymd-His') . "-" . Str::upper(Str::random(5));
         $expiredAt = $now->copy()->addSeconds(45);
 
         DB::table('qr_validasi')->insert([
