@@ -59,15 +59,15 @@ Route::middleware(['auth', 'kurikulum'])->group(function () {
     });
 
     // GURU
-    // Route::prefix('guru')->name('guru.')->group(function () {
-    //     Route::get('/', [GuruController::class, 'index'])->name('index');
-    //     Route::get('/create', [GuruController::class, 'create'])->name('create');
-    //     Route::post('/store', [GuruController::class, 'store'])->name('store');
-    //     Route::get('/edit/{id}', [GuruController::class, 'edit'])->name('edit');
-    //     Route::put('/update/{id}', [GuruController::class, 'update'])->name('update');
-    //     Route::delete('/delete/{id}', [GuruController::class, 'delete'])->name('delete');
-    //     Route::post('/import', [GuruController::class, 'import'])->name('import');
-    // });
+    Route::prefix('guru')->name('guru.')->group(function () {
+        Route::get('/', [GuruController::class, 'index'])->name('index');
+        Route::get('/create', [GuruController::class, 'create'])->name('create');
+        Route::post('/store', [GuruController::class, 'store'])->name('store');
+        Route::get('/edit/{id}', [GuruController::class, 'edit'])->name('edit');
+        Route::put('/update/{id}', [GuruController::class, 'update'])->name('update');
+        Route::delete('/delete/{id}', [GuruController::class, 'delete'])->name('delete');
+        Route::post('/import', [GuruController::class, 'import'])->name('import');
+    });
 
     // Mapel
     Route::prefix('mapel')->name('mapel.')->group(function () {
@@ -148,19 +148,6 @@ Route::middleware(['auth', 'kurikulum'])->group(function () {
     Route::get('/profile/setting', fn() => view('setting'))->name('profile.setting');
     Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
 });
-
-Route::middleware(['auth', 'role:admin,kurikulum'])->group(function () {
-    Route::prefix('guru')->name('guru.')->group(function () {
-        Route::get('/', [GuruController::class, 'index'])->name('index');
-        Route::get('/create', [GuruController::class, 'create'])->name('create');
-        Route::post('/store', [GuruController::class, 'store'])->name('store');
-        Route::get('/edit/{id}', [GuruController::class, 'edit'])->name('edit');
-        Route::put('/update/{id}', [GuruController::class, 'update'])->name('update');
-        Route::delete('/delete/{id}', [GuruController::class, 'delete'])->name('delete');
-        Route::post('/import', [GuruController::class, 'import'])->name('import');
-    });
-});
-
 
 // Khusus admin saja
 Route::middleware(['auth', 'role:admin'])->group(function () {

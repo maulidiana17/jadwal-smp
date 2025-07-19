@@ -176,7 +176,7 @@
       <nav class="sidebar sidebar-offcanvas" id="sidebar">
         <ul class="nav">
           <li class="nav-item">
-          <a class="nav-link {{ request()->is('dashboard') ? 'bg-info text-white' : '' }}" href="/dashboard">
+          <a class="nav-link {{ request()->is('dashboardkurikulum') ? 'bg-info text-white' : '' }}" href="/dashboardkurikulum">
             <i class="mdi mdi-view-dashboard-outline menu-icon"></i>
             <span class="menu-title">Dashboard</span>
           </a>
