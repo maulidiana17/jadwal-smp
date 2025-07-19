@@ -1,5 +1,0 @@
-[phases.build]
-cmds = [
-  'rm -rf public/storage',
-  'php artisan storage:link'
-]
