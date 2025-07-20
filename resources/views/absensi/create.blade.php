@@ -152,7 +152,6 @@ function mulaiScanQR() {
             scanner.stop();
             document.getElementById('preview').style.display = "none";
 
-            // ✅ Aktifkan fitur presensi (webcam, lokasi)
            setTimeout(() => {
             $("#presensi").show();
             aktifkanWebcam();
@@ -176,7 +175,7 @@ function mulaiScanQR() {
     });
 }
 
-// ✅ Ambil lokasi GPS
+
 function getLokasi() {
     if(navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(successCallback, errorCallback, {
@@ -216,7 +215,6 @@ function errorCallback(err) {
     alert("Gagal mendapatkan lokasi. Aktifkan GPS dan izinkan akses lokasi.");
 }
 
-// ✅ Ambil gambar webcam
 function aktifkanWebcam() {
     Webcam.set({
         width: window.innerWidth * 0.9,
@@ -233,7 +231,7 @@ function aktifkanWebcam() {
     });
 }
 
-// ✅ Kirim data presensi
+
 $("#presensi").click(function(e){
     Webcam.snap(function(uri){
         image = uri;
