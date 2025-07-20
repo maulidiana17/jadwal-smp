@@ -57,11 +57,11 @@
 @section('content')
 
 <!-- Scan QR Area -->
-<div class="row" style="margin-top: 70px; @if($cek > 0) display:none; @endif">
+{{--  <div class="row" style="margin-top: 70px; @if($cek > 0) display:none; @endif">
     <div class="col-12 text-center">
         <video id="preview"></video>
     </div>
-</div>
+</div>  --}}
 
 <!-- Section Webcam -->
 <div class="row" style="margin-top: 70px;">
@@ -108,69 +108,9 @@ var notif_masuk = document.getElementById('notif_masuk');
 var notif_keluar = document.getElementById('notif_keluar');
 var radius_sekolah = document.getElementById('radius_sekolah');
 var lokasi = document.getElementById('lokasi');
-let scanner;
-let kodeQRValid = '';
 
-$("#presensi").hide();
-
-// ✅ Ambil QR secara berkala tiap 30 detik
-function ambilQRCode() {
-    fetch('/absensi/qr-terbaru')
-        .then(res => res.json())
-        .then(data => {
-            kodeQRValid = data.kode;
-
-            // Jika ingin tampilkan QR di halaman:
-            if (document.getElementById("qrCode")) {
-                document.getElementById("qrCode").innerHTML = "";
-                new QRCode(document.getElementById("qrCode"), {
-                    text: kodeQRValid,
-                    width: 200,
-                    height: 200,
-                });
-            }
-        });
-}
-
-ambilQRCode(); // Ambil pertama kali
-setInterval(ambilQRCode, 30000); // Refresh tiap 30 detik
-
-setTimeout(() => {
-    mulaiScanQR();
-}, 1000);
-
-// ✅ Mulai scan QR dengan validasi kode dinamis
-function mulaiScanQR() {
-    scanner = new Instascan.Scanner({ video: document.getElementById('preview'), mirror: false });
-
-    scanner.addListener('scan', function (content) {
-        if (content.trim() === kodeQRValid.trim()) {
-            alert("QR Valid, silakan lanjut presensi.");
-            scanner.stop();
-            document.getElementById('preview').style.display = "none";
-
-            setTimeout(() => {
-                $("#presensi").show();
-                aktifkanWebcam();
-                getLokasi();
-            }, 1500);
-        } else {
-            alert("QR tidak valid atau sudah kadaluarsa.");
-        }
-    });
-
-    Instascan.Camera.getCameras().then(function (cameras) {
-        if (cameras.length > 0) {
-            let selectedCamera = cameras.length > 1 ? cameras[1] : cameras[0];
-            scanner.start(selectedCamera);
-        } else {
-            alert('Kamera tidak tersedia!');
-        }
-    }).catch(function (e) {
-        console.error(e);
-        alert('Tidak bisa mengakses kamera: ' + e);
-    });
-}
+// ✅ Tampilkan tombol presensi langsung (jika tidak ingin disembunyikan dulu)
+$("#presensi").show();
 
 // ✅ Aktifkan webcam untuk ambil foto
 function aktifkanWebcam() {
@@ -227,11 +167,9 @@ function errorCallback() {
     alert("Gagal mendapatkan lokasi.");
 }
 
-@if($cek > 0)
-    $("#presensi").show();
-    aktifkanWebcam();
-    getLokasi();
-@endif
+// ✅ Jalankan saat halaman dimuat
+aktifkanWebcam();
+getLokasi();
 
 // ✅ Tombol presensi diklik, kirim foto dan lokasi ke Laravel
 $("#presensi").click(function(e){
