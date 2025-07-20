@@ -79,46 +79,90 @@ class PengampuController extends Controller
             ->get()
             ->groupBy(fn($item) => $item->guru_id . '-' . $item->mapel_id);
 
-        return view('pengampu.view', ['groups' => $groups]);
+        return view('pengampu.index', ['groups' => $groups]);
     }
 
+    // public function editMultiple($guru_id, $mapel_id)
+    // {
+    //     $kelasList = \App\Models\Kelas::all();
+    //     $pengampuGroup = \App\Models\Pengampu::with('guru', 'mapel')
+    //         ->where('guru_id', $guru_id)
+    //         ->where('mapel_id', $mapel_id)
+    //         ->first();
+
+    //     $kelasSelected = \App\Models\Pengampu::where('guru_id', $guru_id)
+    //         ->where('mapel_id', $mapel_id)
+    //         ->pluck('kelas_id')
+    //         ->toArray();
+
+    //     return view('pengampu.edit', compact('pengampuGroup', 'kelasList', 'kelasSelected'));
+    // }
     public function editMultiple($guru_id, $mapel_id)
     {
-        $kelasList = \App\Models\Kelas::all();
-        $pengampuGroup = \App\Models\Pengampu::with('guru', 'mapel')
-            ->where('guru_id', $guru_id)
+        $pengampuGroup = Pengampu::where('guru_id', $guru_id)
             ->where('mapel_id', $mapel_id)
-            ->first();
+            ->firstOrFail();
 
-        $kelasSelected = \App\Models\Pengampu::where('guru_id', $guru_id)
+        $kelasSelected = Pengampu::where('guru_id', $guru_id)
             ->where('mapel_id', $mapel_id)
             ->pluck('kelas_id')
             ->toArray();
 
-        return view('pengampu.edit', compact('pengampuGroup', 'kelasList', 'kelasSelected'));
-    }
+        $kelasList = Kelas::orderBy('nama')->get();
+        $mapelList = Mapel::orderBy('mapel')->get(); // <--- penting
 
-    public function updateMultiple(Request $request, $guru_id, $mapel_id)
+        return view('pengampu.edit', compact('pengampuGroup', 'kelasList', 'kelasSelected', 'mapelList'));
+    }
+    
+    public function updateMultiple(Request $request, $guru_id, $old_mapel_id)
     {
         $request->validate([
+            'mapel_id' => 'required|exists:mapel,id',
             'kelas_ids' => 'required|array|min:1',
-            'kelas_ids.*' => 'exists:kelas,id',
         ]);
 
-        \App\Models\Pengampu::where('guru_id', $guru_id)
-            ->where('mapel_id', $mapel_id)
+        $new_mapel_id = $request->input('mapel_id');
+        $kelas_ids = $request->input('kelas_ids');
+
+        // 1. Hapus semua pengampu lama untuk guru + mapel lama
+        Pengampu::where('guru_id', $guru_id)
+            ->where('mapel_id', $old_mapel_id)
             ->delete();
 
-        foreach ($request->kelas_ids as $kelas_id) {
-            \App\Models\Pengampu::create([
+        // 2. Tambahkan pengampu baru untuk guru + mapel baru ke kelas-kelas terpilih
+        foreach ($kelas_ids as $kelas_id) {
+            Pengampu::create([
                 'guru_id' => $guru_id,
-                'mapel_id' => $mapel_id,
+                'mapel_id' => $new_mapel_id,
                 'kelas_id' => $kelas_id,
             ]);
         }
 
         return redirect()->route('pengampu.index')->with('success', 'Data pengampu berhasil diperbarui.');
     }
+
+
+    // public function updateMultiple(Request $request, $guru_id, $mapel_id)
+    // {
+    //     $request->validate([
+    //         'kelas_ids' => 'required|array|min:1',
+    //         'kelas_ids.*' => 'exists:kelas,id',
+    //     ]);
+
+    //     \App\Models\Pengampu::where('guru_id', $guru_id)
+    //         ->where('mapel_id', $mapel_id)
+    //         ->delete();
+
+    //     foreach ($request->kelas_ids as $kelas_id) {
+    //         \App\Models\Pengampu::create([
+    //             'guru_id' => $guru_id,
+    //             'mapel_id' => $mapel_id,
+    //             'kelas_id' => $kelas_id,
+    //         ]);
+    //     }
+
+    //     return redirect()->route('pengampu.index')->with('success', 'Data pengampu berhasil diperbarui.');
+    // }
 
 
     public function destroyGroup($guru_id, $mapel_id)
