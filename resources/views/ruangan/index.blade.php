@@ -51,7 +51,7 @@
                     </div>
                   </div>
 
-                  @if (session('success'))
+                  {{-- @if (session('success'))
                     <div class="alert alert-success alert-dismissible fade show d-flex align-items-center" 
                           role="alert"  style="max-width: 600px; margin-top: 20px;">
                         <i class="bi bi-check-circle-fill me-2"></i>
@@ -60,7 +60,7 @@
                         </div>
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
-                @endif
+                @endif --}}
 
                   <div class="table-responsive">
                     <table class="table table-striped">
