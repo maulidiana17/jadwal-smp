@@ -24,7 +24,7 @@ class QrValidasiSeeder extends Seeder
             QRValidasi::create([
                 'kode_qr' => 'ABSEN-' . $now->format('Ymd-His') . '-' . Str::random(5),
                 'tanggal' => $now->toDateString(),
-                'expired_at' => $now->copy()->addSeconds(30)
+                'expired_at' => $now->copy()->addMinutes(30)
             ]);
         }
     }
