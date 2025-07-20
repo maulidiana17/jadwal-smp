@@ -231,6 +231,7 @@ cmds = [
     "composer install --optimize-autoloader --no-dev",
     "php artisan cache:clear",
     "php artisan optimize:clear",
+    "php artisan storage:link",
 ]
 
 [phases.install]
