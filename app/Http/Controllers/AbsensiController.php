@@ -26,7 +26,7 @@ class AbsensiController extends Controller
         $hariini = date("Y-m-d");
         $nis = Auth::guard('siswa')->user()->nis;
         $cek = DB::table('absensi')->where('tgl_absen', $hariini)->where('nis',$nis)->count();
-        $lok_sekolah = DB::table('konfigurasi_lokasi')->where('id',1)->first();
+        $lok_sekolah = DB::table('konfigurasi_lokasi')->first();
         //dd($lokasi_sekolah);
         return view('absensi.create', compact('cek','lok_sekolah'));
     }

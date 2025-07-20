@@ -113,7 +113,7 @@ let kodeQRValid = '';
 
 $("#presensi").hide();
 
-// Ambil QR secara berkala tiap 30 detik
+// ✅ Ambil QR secara berkala tiap 30 detik
 function ambilQRCode() {
     fetch('/absensi/qr-terbaru')
         .then(res => res.json())
@@ -139,18 +139,12 @@ setTimeout(() => {
     mulaiScanQR();
 }, 1000);
 
-// Mulai scan QR dengan validasi kode dinamis
+// ✅ Mulai scan QR dengan validasi kode dinamis
 function mulaiScanQR() {
     scanner = new Instascan.Scanner({ video: document.getElementById('preview'), mirror: false });
 
-   scanner.addListener('scan', function (content) {
-        const scanned = content.trim().replace(/\s/g, '').toUpperCase();
-        const valid = kodeQRValid.trim().replace(/\s/g, '').toUpperCase();
-
-        console.log("SCAN:", scanned);
-        console.log("SERVER:", valid);
-
-        if (scanned === valid) {
+    scanner.addListener('scan', function (content) {
+        if (content.trim() === kodeQRValid.trim()) {
             alert("QR Valid, silakan lanjut presensi.");
             scanner.stop();
             document.getElementById('preview').style.display = "none";
@@ -165,7 +159,6 @@ function mulaiScanQR() {
         }
     });
 
-
     Instascan.Camera.getCameras().then(function (cameras) {
         if (cameras.length > 0) {
             let selectedCamera = cameras.length > 1 ? cameras[1] : cameras[0];
@@ -179,7 +172,7 @@ function mulaiScanQR() {
     });
 }
 
-// Aktifkan webcam untuk ambil foto
+// ✅ Aktifkan webcam untuk ambil foto
 function aktifkanWebcam() {
     Webcam.set({
         width: window.innerWidth * 0.9,
@@ -196,7 +189,7 @@ function aktifkanWebcam() {
     });
 }
 
-// Ambil lokasi GPS
+// ✅ Ambil lokasi GPS
 function getLokasi() {
     if(navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(successCallback, errorCallback, {
@@ -240,7 +233,7 @@ function errorCallback() {
     getLokasi();
 @endif
 
-// Tombol presensi diklik, kirim foto dan lokasi ke Laravel
+// ✅ Tombol presensi diklik, kirim foto dan lokasi ke Laravel
 $("#presensi").click(function(e){
     Webcam.snap(function(uri){
         image = uri;

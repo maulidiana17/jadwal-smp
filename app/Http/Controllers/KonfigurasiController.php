@@ -10,7 +10,9 @@ class KonfigurasiController extends Controller
 {
     public function lokasisekolah()
     {
-        $lok_sekolah = DB::table('konfigurasi_lokasi')->where('id',1)->first();
+        // $lok_sekolah = DB::table('konfigurasi_lokasi')->where('id')->first();
+        $lok_sekolah = DB::table('konfigurasi_lokasi')->first();
+
         return view('konfigurasi.lokasisekolah', compact('lok_sekolah'));
     }
     public function updatelokasisekolah(Request $request)
