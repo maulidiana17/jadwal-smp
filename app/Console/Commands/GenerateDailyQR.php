@@ -31,7 +31,7 @@ class GenerateDailyQR extends Command
         $now = Carbon::now();
 
         // Cek apakah dalam rentang waktu 05:00 - 08:00
-        if ($now->between(Carbon::today()->setTime(5, 0), Carbon::today()->setTime(8, 0))) {
+        if ($now->between(Carbon::today()->setTime(11, 0), Carbon::today()->setTime(12, 0))) {
             QRValidasi::where('expired_at', '<', $now)->delete();
 
             QRValidasi::create([
