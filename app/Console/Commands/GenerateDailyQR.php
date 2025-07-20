@@ -37,7 +37,7 @@ class GenerateDailyQR extends Command
             QRValidasi::create([
                 'kode_qr' => 'ABSEN-' . $now->format('Ymd-His') . '-' . Str::random(5),
                 'tanggal' => $now->toDateString(),
-                'expired_at' => $now->copy()->addMinutes(30) // expired 30 menit setelah dibuat
+                'expired_at' => $now->copy()->addSeconds(30) // expired 30 detik setelah dibuat
             ]);
 
             $this->info('QR Code generated at: ' . $now->toDateTimeString());
