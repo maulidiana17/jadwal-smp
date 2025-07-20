@@ -153,9 +153,11 @@ function mulaiScanQR() {
             document.getElementById('preview').style.display = "none";
 
             // ✅ Aktifkan fitur presensi (webcam, lokasi)
+           setTimeout(() => {
             $("#presensi").show();
             aktifkanWebcam();
             getLokasi();
+        }, 1000);
         } else {
             alert("QR tidak valid atau sudah kadaluarsa.");
         }
