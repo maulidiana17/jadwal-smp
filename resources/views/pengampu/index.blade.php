@@ -45,12 +45,37 @@
                                     <td>{{ $kelasList }}</td>
                                     <td>
                                         <a href="{{ route('pengampu.editMultiple', [$guru->id, $mapel->id]) }}" class="ti-pencil text-warning me-2" title="Edit Kelas"></a>
-                                        <form action="{{ route('pengampu.destroyGroup', [$guru->id, $mapel->id]) }}" method="POST" class="d-inline" onsubmit="return confirm('Yakin hapus semua kelas untuk guru ini?')">
-                                            @csrf @method('DELETE')
-                                            <button type="submit" class="btn btn-sm text-danger p-0 border-0 bg-transparent" title="Hapus Semua"><i class="ti-trash"></i></button>
-                                        </form>
-                                    </td>
-                                </tr>
+                                        {{-- <form action="{{ route('pengampu.destroyGroup', [$guru->id, $mapel->id]) }}" method="POST" class="d-inline" onsubmit="return confirm('Yakin hapus semua kelas untuk guru ini?')">
+                                            @csrf @method('DELETE') --}}
+                                        <a href="" class="ti-trash text-danger" data-toggle="modal" data-target="#modal-hapus{{ $guru->id }}"></a>
+                          </td>
+                        </tr>
+
+                        <!-- Modal -->
+                        <div class="modal fade" id="modal-hapus{{ $guru->id }}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                          <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalLabel">Konfirmasi Hapus Data</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
+                                  <span aria-hidden="true">&times;</span>
+                                </button>
+                              </div>
+                               <div class="modal-body">
+                                 <p>Apakah anda yakin menghapus data pengampu <b>{{$guru->nama}}</b></p> 
+                               </div>
+                              <div class="modal-footer">
+                                <form action="{{ route('pengampu.destroyGroup', [$guru->id, $mapel->id]) }}" method="POST">
+                                  @csrf
+                                  @method('DELETE')
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                                <button type="submit" class="btn btn-danger">Hapus</button>
+                                </form>
+                                
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                             @endforeach
 
                             @if ($groups->isEmpty())

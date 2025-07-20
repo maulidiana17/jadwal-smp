@@ -12,6 +12,16 @@
                   <a class="mdi mdi-file-excel text-success" data-toggle="modal" 
                   data-target="#importModal">Impor Excel</a>
                   </div>
+                  @if (session('success'))
+                    <div class="alert alert-success alert-dismissible fade show d-flex align-items-center" 
+                          role="alert"  style="max-width: 600px; margin-top: 20px;">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        <div>
+                            {{ session('success') }}
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
 
                   <!-- Modal -->
                   <div class="modal fade" id="importModal" tabindex="-1" role="dialog" 
@@ -89,7 +99,7 @@
                                 </button>
                               </div>
                                <div class="modal-body">
-                                 <p>Apakah anda yakin menghapus data <b>{{$rg->ruangan}}</b></p> 
+                                 <p>Apakah anda yakin menghapus data ruangan <b>{{$rg->nama}}</b></p> 
                                </div>
                               <div class="modal-footer">
                                 <form action="{{route('ruangan.delete',$rg->id)}}" method="POST">
