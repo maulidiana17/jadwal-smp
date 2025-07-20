@@ -60,6 +60,7 @@
 <div class="row" style="margin-top: 70px; @if($cek > 0) display:none; @endif">
     <div class="col-12 text-center">
         <video id="preview"></video>
+        <div id="qrMessage" class="alert alert-warning mt-3" style="display:none;"></div>
     </div>
 </div>
 
@@ -111,11 +112,10 @@ let scanner;
 let kodeQRValid = '';
 let image = '';
 
-$("#presensi").hide(); // Sembunyikan dulu tombol
+$("#presensi").hide();
 
-// ✅ Ambil QR lalu mulai scan kamera
-function ambilQRCodeDanMulaiScan() {
-    fetch('/absensi/qr-terbaru?ts=' + new Date().getTime()) // cegah cache
+{{--  function ambilQRCodeDanMulaiScan() {
+    fetch('/absensi/qr-terbaru?ts=' + new Date().getTime())
         .then(res => res.json())
         .then(data => {
             if (!data.kode || data.aktif === false) {
@@ -134,13 +134,53 @@ function ambilQRCodeDanMulaiScan() {
                 });
             }
 
-            mulaiScanQR(); // ✅ Hanya mulai scan setelah QR valid berhasil diambil
+            mulaiScanQR();
+        })
+        .catch(error => {
+            console.error("Gagal ambil QR:", error);
+            alert("Gagal ambil kode QR.");
+        });
+}  --}}
+  function ambilQRCodeDanMulaiScan() {
+    fetch('/absensi/qr-terbaru?ts=' + new Date().getTime())
+        .then(res => res.json())
+        .then(data => {
+            const qrMessage = document.getElementById("qrMessage");
+
+            if (!data.kode || data.aktif === false) {
+                if (qrMessage) {
+                    qrMessage.innerText = data.pesan ?? 'QR belum tersedia';
+                    qrMessage.style.display = 'block';
+
+                    // Sembunyikan pesan setelah 3 detik
+                    setTimeout(() => {
+                        qrMessage.style.display = 'none';
+                    }, 3000);
+                } else {
+                    alert(data.pesan ?? 'QR belum tersedia');
+                }
+                return;
+            }
+
+            kodeQRValid = data.kode;
+
+            if (document.getElementById("qrCode")) {
+                document.getElementById("qrCode").innerHTML = "";
+                new QRCode(document.getElementById("qrCode"), {
+                    text: kodeQRValid,
+                    width: 200,
+                    height: 200,
+                });
+            }
+
+            mulaiScanQR();
         })
         .catch(error => {
             console.error("Gagal ambil QR:", error);
             alert("Gagal ambil kode QR.");
         });
 }
+
 
 function mulaiScanQR() {
     scanner = new Instascan.Scanner({ video: document.getElementById('preview'), mirror: false });
@@ -280,9 +320,8 @@ $("#presensi").click(function(e){
     });
 });
 
-// ✅ Inisialisasi saat halaman dimuat
 ambilQRCodeDanMulaiScan();
-setInterval(ambilQRCodeDanMulaiScan, 30000); // Refresh QR tiap 30 detik
+setInterval(ambilQRCodeDanMulaiScan, 30000);
 </script>
 @endpush
 
