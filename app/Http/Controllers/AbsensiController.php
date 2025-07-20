@@ -36,7 +36,7 @@ class AbsensiController extends Controller
         $tgl_absen = date("Y-m-d");
         $jam = date("H:i:s");
         $jamBuka  = "05:00:00";
-        $jamTutup = "12:00:00";
+        $jamTutup = "15:00:00";
 
         if ($jam < $jamBuka || $jam > $jamTutup) {
             echo "error|Presensi hanya diperbolehkan antara pukul 05:00 - 07:45|jam_invalid";
@@ -259,7 +259,7 @@ public function getQrTerbaru()
 
     // Atur waktu buka dan tutup presensi
     $jamBuka  = '05:00';
-    $jamTutup = '12:00';
+    $jamTutup = '15:00';
 
     // Cek apakah sekarang di luar jam presensi
     if ($jamSekarang < $jamBuka || $jamSekarang > $jamTutup) {

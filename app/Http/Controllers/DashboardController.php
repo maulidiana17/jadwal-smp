@@ -80,23 +80,8 @@ class DashboardController extends Controller
 
 
         // Batas jam sekolah
-        // $jamAwalSekolah = strtotime('05:00');
-        // $jamAkhirSekolah = strtotime('15:00');
-//         $jamAwalSekolah = strtotime(now()->format('Y-m-d') . ' 05:00:00');
-// $jamAkhirSekolah = strtotime(now()->format('Y-m-d') . ' 15:00:00');
-
-// $jamAwalSekolah = strtotime(now()->format('Y-m-d') . ' 05:00:00');
-// $jamAkhirSekolah = strtotime(now()->format('Y-m-d') . ' 15:00:00');
-$jamSekarang = now();
-$jamAwalSekolah = now()->setTime(5, 0, 0);
-$jamAkhirSekolah = now()->setTime(15, 0, 0);
-
-if ($jamSekarang->lt($jamAwalSekolah) || $jamSekarang->gt($jamAkhirSekolah)) {
-    return response()->json([
-        'aktif' => false,
-        'pesan' => 'Diluar jam pembuatan QR'
-    ]);
-}
+        $jamAwalSekolah = strtotime('05:00');
+        $jamAkhirSekolah = strtotime('15:00');
 
         // Ambil ID kelas berdasarkan nama kelas
         $kelas = DB::table('kelas')
