@@ -258,5 +258,4 @@ nixOverlays = [
 nixpkgsArchive = 'dbc4f15b899ac77a8d408d8e0f89fa9c0c5f2b78'
 
 [start]
-[start]
 cmd = 'node /assets/scripts/prestart.mjs /assets/nginx.template.conf /nginx.conf && (php-fpm -y /assets/php-fpm.conf & nginx -c /nginx.conf) && while true; do php artisan schedule:run >> /dev/null 2>&1; sleep 60; done'
