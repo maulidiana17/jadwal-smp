@@ -100,8 +100,7 @@
 
 @section('content')
 <div class="container">
-    {{-- Alert Messages --}}
-    <div class="mt-4">
+    <div class="mt-5 position-relative" style="z-index: 999;">
         @if(Session::has('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 {{ Session::get('success') }}
