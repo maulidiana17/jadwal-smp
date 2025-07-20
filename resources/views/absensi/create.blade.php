@@ -133,7 +133,7 @@ function ambilQRCode() {
 }
 
 ambilQRCode(); // Ambil pertama kali
-setInterval(ambilQRCode, 30000); // Refresh tiap 30 detik
+setInterval(ambilQRCode, 1800000); // Refresh tiap 30 detik
 
 setTimeout(() => {
     mulaiScanQR();
