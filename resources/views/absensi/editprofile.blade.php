@@ -99,7 +99,7 @@
 @endsection
 
 @section('content')
-<div class="container">
+<div class="container-fluid px-3 px-md-5">
     {{-- Alert Messages --}}
     <div class="mt-4">
         @if(Session::has('success'))
@@ -117,10 +117,8 @@
     </div>
 
     {{-- Card Form --}}
-    {{--  <div class="d-flex justify-content-center align-items-start" style="min-height: 80vh; padding-top: 40px;">  --}}
-    <div class="d-flex justify-content-center align-items-start" style="min-height: 80vh; padding: 40px 16px 100px;">
-
-        <div class="card shadow-sm w-100" style="max-width: 400px;">
+    <div class="d-flex justify-content-center align-items-start py-4" style="min-height: 80vh;">
+        <div class="card shadow-sm w-100" style="max-width: 500px;">
             <div class="card-body p-4">
                 <form action="/absensi/{{ $siswa->nis }}/updateprofile" method="POST" enctype="multipart/form-data">
                     @csrf
@@ -170,7 +168,8 @@
     </div>
 </div>
 
-{{-- Preview Script --}}
+{{-- JS & CSS --}}
+@section('scripts')
 <script>
     document.getElementById('fileUploadBox').addEventListener('click', function () {
         document.getElementById('fileuploadInput').click();
@@ -191,5 +190,17 @@
         }
     });
 </script>
-@endsection
+<style>
+    @media (max-width: 576px) {
+        #previewImage {
+            width: 80px !important;
+            height: 80px !important;
+        }
 
+        .card-body {
+            padding: 1.5rem !important;
+        }
+    }
+</style>
+@endsection
+@endsection
