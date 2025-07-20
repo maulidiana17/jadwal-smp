@@ -102,23 +102,19 @@
 <div class="container">
     <div class="mt-5 position-relative" style="z-index: 999;">
         @if(Session::has('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <div class="alert alert-success fade show" role="alert" id="alert-success">
                 {{ Session::get('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         @endif
         @if(Session::has('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <div class="alert alert-danger fade show" role="alert" id="alert-error">
                 {{ Session::get('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         @endif
     </div>
 
-    {{-- Card Form --}}
-    {{--  <div class="d-flex justify-content-center align-items-start" style="min-height: 80vh; padding-top: 40px;">  --}}
-    <div class="d-flex justify-content-center align-items-start" style="min-height: 80vh; padding: 40px 16px 100px;">
 
+  <div class="d-flex justify-content-center align-items-start" style="min-height: 80vh; padding: 40px 16px 100px;">
         <div class="card shadow-sm w-100" style="max-width: 400px;">
             <div class="card-body p-4">
                 <form action="/absensi/{{ $siswa->nis }}/updateprofile" method="POST" enctype="multipart/form-data">
@@ -189,6 +185,22 @@
             previewImage.src = "{{ asset('assets/img/sample/avatar/nouser.jpg') }}";
         }
     });
+    setTimeout(function () {
+        const successAlert = document.getElementById('alert-success');
+        if (successAlert) {
+            successAlert.classList.add('fade');
+            successAlert.style.opacity = 0;
+        }
+    }, 3000);
+
+    // Auto-hide error alert
+    setTimeout(function () {
+        const errorAlert = document.getElementById('alert-error');
+        if (errorAlert) {
+            errorAlert.classList.add('fade');
+            errorAlert.style.opacity = 0;
+        }
+    }, 3000);
 </script>
 @endsection
 
