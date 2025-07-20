@@ -14,18 +14,14 @@ class QrValidasiSeeder extends Seeder
     /**
      * Run the database seeds.
      */
-   public function run(): void
-    {
-        $now = Carbon::now();
+  public function run(): void
+{
+    $now = Carbon::now();
 
-        if ($now->between(Carbon::today()->setTime(5, 0), Carbon::today()->setTime(8, 0))) {
-            QRValidasi::where('expired_at', '<', $now)->delete();
-
-            QRValidasi::create([
-                'kode_qr' => 'ABSEN-' . $now->format('Ymd-His') . '-' . Str::random(5),
-                'tanggal' => $now->toDateString(),
-                'expired_at' => $now->copy()->addMinutes(30)
-            ]);
-        }
-    }
+    QRValidasi::create([
+        'kode_qr' => 'ABSEN-' . $now->format('Ymd-His') . '-' . Str::random(5),
+        'tanggal' => $now->toDateString(),
+        'expired_at' => $now->copy()->addMinutes(30)
+    ]);
+}
 }

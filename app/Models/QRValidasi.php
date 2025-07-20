@@ -11,6 +11,6 @@ class QRValidasi extends Model
     protected $table = 'qr_validasi';
 
     protected $fillable = [
-        'kode_qr', 'tanggal', 'created_at', 'expired_at'
+        'kode_qr', 'tanggal', 'created_at', 'updated_at', 'expired_at'
     ];
 }

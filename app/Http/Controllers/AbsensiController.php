@@ -242,6 +242,7 @@ public function showQrPresensi()
             'tanggal'     => date('Y-m-d'),
             'kode_qr'     => $kode,
             'created_at'  => $now,
+            'updated_at'  => $now,
             'expired_at'  => $expiredAt
         ]);
     } else {
@@ -285,6 +286,7 @@ public function getQrTerbaru()
             'tanggal'     => date('Y-m-d'),
             'kode_qr'     => $kode,
             'created_at'  => $now,
+            'updated_at'  => $now,
             'expired_at'  => $expiredAt
         ]);
     } else {
