@@ -1,88 +1,3 @@
-{{--  @extends('layouts.absen')
-@section('header')
-
-<div class="appHeader bg-darkred text-light">
-    <div class="left">
-        <a href="javascript:'" class="headerButton goBack">
-            <ion-icon name="chevron-back-outline"></ion-icon>
-        </a>
-    </div>
-    <div class="pageTitle">Edit Profile</div>
-    <div class="right"></div>
-</div>
-@endsection
-
-@section('content')
-<div class="row" style="margin-top: 4rem;">
-    <div class="col">
-        @php
-            $messagesuccess = Session::get('success');
-            $messageerror = Session::get('error');
-        @endphp
-            @if(Session::get('success'))
-                <div class="alert alert-success">
-                    {{ $messagesuccess }}
-                </div>
-            @endif
-            @if(Session::get('error'))
-            <div class="alert alert-danger">
-                {{ $messageerror }}
-            </div>
-        @endif
-
-    </div>
-</div>
-<form action="/absensi/{{ $siswa->nis }}/updateprofile" method="POST" enctype="multipart/form-data" style="margin-top: 4rem; max-width: 300px; margin-left: auto; margin-right: auto; padding: 20px; background: #f8f9fa; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); padding-bottom: 20px;">
-    @csrf
-    <div class="col">
-        <div class="form-group boxed">
-            <label for="nama_lengkap">Nama Lengkap</label>
-            <div class="input-wrapper">
-                <input type="text" class="form-control" value="{{ $siswa->nama_lengkap }}" name="nama_lengkap" placeholder="Nama Lengkap" autocomplete="off">
-            </div>
-        </div>
-
-        <div class="form-group boxed">
-            <label for="no_hp">No. HP</label>
-            <div class="input-wrapper">
-                <input type="text" class="form-control"  value="{{ $siswa->no_hp }}" name="no_hp" placeholder="No. HP" autocomplete="off">
-            </div>
-        </div>
-
-        <div class="form-group boxed">
-            <label for="password">Password</label>
-            <div class="input-wrapper">
-                <input type="password" class="form-control" value=""  name="password" placeholder="Password" autocomplete="off">
-            </div>
-        </div>
-
-        <div class="custom-file-upload" id="fileUpload1" style="width: 220px; height: 100px; margin: auto; text-align: center; border: 1px solid #ccc; border-radius: 5px; padding: 8px; display: flex; align-items: center; justify-content: center;">
-            <input type="file" name="foto" id="fileuploadInput" accept=".png, .jpg, .jpeg" style="display: none;">
-            <label for="fileuploadInput" style="cursor: pointer; font-size: 16px;">
-                <span>
-                    <strong>
-                        <ion-icon name="cloud-upload-outline" role="img" class="md hydrated" aria-label="cloud upload outline" style="font-size: 20px;"></ion-icon>
-                        <i>Upload File</i>
-                    </strong>
-                </span>
-            </label>
-        </div>
-
-
-    <div class="form-group boxed">
-        <div class="input-wrapper">
-            <button type="submit" class="btn btn-primary btn-block">
-                <ion-icon name="refresh-outline"></ion-icon>
-                    Update
-            </button>
-        </div>
-    </div>
-    </div>
-</form>
-@endsection
-
-
-  --}}
 @extends('layouts.absen')
 
 @section('header')
@@ -99,9 +14,9 @@
 @endsection
 
 @section('content')
-<div class="container-fluid px-3 px-md-5">
+<div class="container-fluid px-3 px-md-5 mt-5 mb-5">
     {{-- Alert Messages --}}
-    <div class="mt-4">
+    <div class="mt-5 position-relative" style="z-index: 999;">
         @if(Session::has('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 {{ Session::get('success') }}
@@ -116,32 +31,27 @@
         @endif
     </div>
 
-    {{-- Card Form --}}
     <div class="d-flex justify-content-center align-items-start py-4" style="min-height: 80vh;">
         <div class="card shadow-sm w-100" style="max-width: 500px;">
             <div class="card-body p-4">
                 <form action="/absensi/{{ $siswa->nis }}/updateprofile" method="POST" enctype="multipart/form-data">
                     @csrf
 
-                    <!-- Nama Lengkap -->
                     <div class="mb-3">
                         <label for="nama_lengkap" class="form-label">Nama Lengkap</label>
                         <input type="text" class="form-control" name="nama_lengkap" value="{{ $siswa->nama_lengkap }}" required>
                     </div>
 
-                    <!-- No HP -->
                     <div class="mb-3">
                         <label for="no_hp" class="form-label">No. HP</label>
                         <input type="text" class="form-control" name="no_hp" value="{{ $siswa->no_hp }}" required>
                     </div>
 
-                    <!-- Password -->
                     <div class="mb-3">
                         <label for="password" class="form-label">Password Baru (opsional)</label>
                         <input type="password" class="form-control" name="password" placeholder="Biarkan kosong jika tidak diganti">
                     </div>
 
-                    <!-- Upload Foto dengan Preview -->
                     <div class="mb-3 text-center">
                         <label for="fileuploadInput" class="form-label d-block">Foto Profil</label>
                         <div id="previewContainer" class="mb-2">
@@ -155,7 +65,6 @@
                         </div>
                     </div>
 
-                    <!-- Submit -->
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary">
                             <ion-icon name="refresh-outline" class="me-1"></ion-icon> Update Profil
@@ -168,7 +77,7 @@
     </div>
 </div>
 
-{{-- JS & CSS --}}
+
 @section('scripts')
 <script>
     document.getElementById('fileUploadBox').addEventListener('click', function () {
@@ -190,6 +99,7 @@
         }
     });
 </script>
+
 <style>
     @media (max-width: 576px) {
         #previewImage {
