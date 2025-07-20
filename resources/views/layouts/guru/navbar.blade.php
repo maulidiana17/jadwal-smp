@@ -42,15 +42,13 @@
                     </div>
                     <span class="profile-username">
                       <span class="op-7">Hi,</span>
-                      @if (Auth::check())
-    @if (Auth::user()->role === 'admin')
-        <span class="fw-bold text-primary">{{ Auth::user()->name }} (Admin)</span>
-    @elseif (Auth::user()->role === 'guru')
-        <span class="fw-bold text-success">{{ Auth::user()->name }} (Guru)</span>
-    @endif
-@endif
-{{--  <span class="fw-bold">{{ Auth::user()->name }} - {{ Auth::user()->role }}</span>  --}}
+                    @php
+                        $guru = \App\Models\Guru::where('email', Auth::user()->email)->first();
+                    @endphp
 
+                    @if ($guru)
+                        <span class="fw-bold text-success">{{ $guru->nama }} (Guru)</span>
+                    @endif
 
                     </span>
                   </a>

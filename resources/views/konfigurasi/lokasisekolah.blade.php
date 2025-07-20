@@ -6,21 +6,12 @@
         <div>
           <h3 class="fw-bold mb-3">Konfigurasi Lokasi</h3>
           <h6 class="op-7 mb-2">Siswa</h6>
-          {{--  @if ($errors->any())
-            <div class="alert alert-danger">
-                <ul class="mb-0">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-         @endif  --}}
         </div>
       </div>
        <div class="page-body">
         <div class="container-xl">
-            <div class="row">
-                <div class="col-6">
+            <div class="row justify-content-center">
+               <div class="col-12 col-md-6">
                     <div class="card">
                         <div class="card-body">
                              @if(Session::get('success'))

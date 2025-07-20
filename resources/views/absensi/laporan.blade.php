@@ -19,8 +19,8 @@
       </div>
        <div class="page-body">
         <div class="container-xl">
-            <div class="row">
-                <div class="col-6">
+            <div class="row justify-content-center">
+                <div class="col-12 col-md-6">
                     <div class="card">
                         <div class="card-body">
                             <form action="/absensi/cetaklaporan" method="POST">
@@ -79,7 +79,7 @@
                                     </div>
                                 </div>
                                 <div class="row mt-2">
-                                    <div class="col-6">
+                                     <div class="col-12 col-md-6 mb-2">
                                         <div class="form-group">
                                             <button type="submit" name="cetak" class="btn btn-primary w-100">
                                                 <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-printer"><path stroke="none" d="M0 0h24v24H0z" fill="none"/>
@@ -91,7 +91,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="col-6">
+                                     <div class="col-12 col-md-6 mb-2">
                                         <div class="form-group">
                                             <button type="submit" name="exportexcel" class="btn btn-success w-100">
                                                 <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-file-type-xls">

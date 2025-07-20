@@ -84,7 +84,7 @@ class GuruController extends Controller
     return redirect()->route('guru.index')->with('success', 'Data guru berhasil diimpor.');
     }
 
-      
+
    public function qr()
     {
         $hariini = Carbon::today()->toDateString();
@@ -113,7 +113,7 @@ class GuruController extends Controller
         ]);
 
         $qrCode = QrCode::size(250)->generate($data);
-       // $siswaAbsenHariIni = QRAbsen::whereDate('waktu', Carbon::today())->get();
+
         $siswaAbsenHariIni = QRAbsen::whereDate('waktu', Carbon::today())
             ->where('nip', $guru->nip)
             ->get();
@@ -162,7 +162,6 @@ class GuruController extends Controller
             ->groupBy('hari');
 
         $jadwalHariIni = DB::table('jadwal')
-            // ->table('jadwal')
             ->join('mapel', 'jadwal.mapel_id', '=', 'mapel.id')
             ->join('kelas', 'jadwal.kelas_id', '=', 'kelas.id')
             ->join('waktu', 'jadwal.waktu_id', '=', 'waktu.id')
@@ -181,19 +180,15 @@ class GuruController extends Controller
             $daftarSiswaKelasHariIni = $daftarSiswaKelasHariIni->merge($siswaKelas);
         }
         $jadwalHariIni = DB::table('jadwal')
-            // ->table('jadwal')
             ->join('mapel', 'jadwal.mapel_id', '=', 'mapel.id')
             ->join('kelas', 'jadwal.kelas_id', '=', 'kelas.id')
             ->join('waktu', 'jadwal.waktu_id', '=', 'waktu.id')
             ->where('jadwal.guru_id', $guru->id)
             ->whereRaw('LOWER(waktu.hari) = ?', [strtolower($hariIndo)])
-            //->select('kelas.nama as nama_kelas')
             ->select('kelas.nama as nama_kelas', 'mapel.mapel')
             ->get();
 
         $absensiHariIni = DB::table('qr_absens')
-            // ->whereDate('waktu', $hariini)
-            // ->pluck('nis');
                 ->whereDate('waktu', $hariini)
                 ->get()
                 ->mapWithKeys(function ($item) {
@@ -276,7 +271,6 @@ class GuruController extends Controller
         $guru = Guru::where('id', $guru->id)->firstOrFail();
 
         $kelasDiajar = DB::table('jadwal')
-            // ->table('jadwal')
             ->join('kelas', 'jadwal.kelas_id', '=', 'kelas.id')
             ->where('jadwal.guru_id', $guru->id)
             ->pluck('kelas.nama')
@@ -320,22 +314,11 @@ class GuruController extends Controller
     public function qrindex()
     {
         $hariini = Carbon::today()->toDateString();
-
         $user = Auth::user();
-
-          
         $guru = Guru::where('email', Auth::user()->email)->first();
-
-
         if (!$guru) {
             abort(404, 'Data guru tidak ditemukan.');
         }
-
-
-        if (!$guru) {
-            abort(404, 'Data guru tidak ditemukan.');
-        }
-
         $jmlhadir = DB::table('qr_absens')
             ->whereDate('waktu', $hariini)
             ->where('nip', $guru->nip)
@@ -391,7 +374,6 @@ class GuruController extends Controller
         $hariIndo = $hariMap[date('l')];
 
         $jadwalMengajarMinggu = DB::table('jadwal')
-            // ->table('jadwal')
             ->join('mapel', 'jadwal.mapel_id', '=', 'mapel.id')
             ->join('kelas', 'jadwal.kelas_id', '=', 'kelas.id')
             ->join('waktu', 'jadwal.waktu_id', '=', 'waktu.id')
@@ -404,7 +386,6 @@ class GuruController extends Controller
             ->groupBy('hari');
 
         $jadwalHariIni = DB::table('jadwal')
-            // ->table('jadwal')
             ->join('mapel', 'jadwal.mapel_id', '=', 'mapel.id')
             ->join('kelas', 'jadwal.kelas_id', '=', 'kelas.id')
             ->join('waktu', 'jadwal.waktu_id', '=', 'waktu.id')
@@ -416,14 +397,13 @@ class GuruController extends Controller
 
         foreach ($jadwalHariIni as $jadwal) {
             $siswaKelas = DB::table('siswa')
-                ->where('kelas', $jadwal->nama_kelas) // atau sesuaikan jika pakai `kelas_id`
+                ->where('kelas', $jadwal->nama_kelas)
                 ->select('nis', 'nama_lengkap', 'kelas')
                 ->get();
 
             $daftarSiswaKelasHariIni = $daftarSiswaKelasHariIni->merge($siswaKelas);
         }
         $jadwalHariIni = DB::table('jadwal')
-            // ->table('jadwal')
             ->join('mapel', 'jadwal.mapel_id', '=', 'mapel.id')
             ->join('kelas', 'jadwal.kelas_id', '=', 'kelas.id')
             ->join('waktu', 'jadwal.waktu_id', '=', 'waktu.id')
@@ -493,13 +473,11 @@ class GuruController extends Controller
         $tanggal = $request->tanggal ?? now()->toDateString();
         $nis = $request->nis;
 
-        // Ambil data siswa
         $siswa = DB::table('siswa')->where('nis', $nis)->first();
         if (!$siswa) {
             return back()->with('error', 'Siswa tidak ditemukan.');
         }
 
-        // Ambil data guru & mapel yang diajar hari ini
         $user = Auth::user();
         $guru = Guru::where('id', $guru->id)->first();
         if (!$guru) {
@@ -515,7 +493,6 @@ class GuruController extends Controller
         $hariIndo = $hariMap[$hari];
 
         $jadwal = DB::table('jadwal')
-            // ->table('jadwal')
             ->join('mapel', 'jadwal.mapel_id', '=', 'mapel.id')
             ->join('kelas', 'jadwal.kelas_id', '=', 'kelas.id')
             ->join('waktu', 'jadwal.waktu_id', '=', 'waktu.id')
@@ -526,7 +503,6 @@ class GuruController extends Controller
             ->first();
 
         $mapel = $jadwal->mapel ?? 'Tidak diketahui';
-
         // Simpan ke qr_absens
         DB::table('qr_absens')->insert([
             'nis' => $nis,
