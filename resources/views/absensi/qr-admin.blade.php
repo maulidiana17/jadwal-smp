@@ -53,7 +53,7 @@
 let kodeQRValid = '';
 
 function ambilQRCode() {
-   fetch('/absensi/qr-terbaru?ts=' + new Date().getTime())
+    fetch('/absensi/qr-terbaru?ts=' + new Date().getTime())
         .then(res => res.json())
         .then(data => {
             if (data.aktif && data.kode) {
