@@ -60,25 +60,44 @@
 </head>
 <body>
 
+    <h1>Scan QR untuk Presensi</h1>
+    <p class="subtitle">QR akan berubah otomatis setiap 30 detik</p>
 
-<div class="container text-center mt-5">
-    <h2>QR Presensi Live</h2>
+    <div id="qrCode"></div>
+   <p id="kodeTampil" style="display:none;"></p>
 
-    @if ($qr)
-        <div id="qrCodeDisplay" class="mt-3"></div>
-        <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-        <script>
-            new QRCode(document.getElementById("qrCodeDisplay"), {
-                text: "{{ $qr->kode_qr }}",
-                width: 300,
-                height: 300
-            });
-        </script>
-    @else
-        <p>QR belum tersedia atau sudah kadaluarsa.</p>
-    @endif
-</div>
 
+    <div class="info">Halaman ini disiapkan untuk keperluan presensi di sekolah.</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+    let qrDiv = document.getElementById("qrCode");
+    let kodeTampil = document.getElementById("kodeTampil");
+
+    function ambilQRCode() {
+    fetch('/absensi/qr-terbaru')
+        .then(res => res.json())
+        .then(data => {
+            if (data.aktif && data.kode) {
+                qrDiv.innerHTML = "";
+                new QRCode(qrDiv, {
+                    text: data.kode,
+                    width: 300,
+                    height: 300
+                });
+            } else {
+                qrDiv.innerHTML = "<p style='color:red; font-weight:bold;'>" + (data.pesan ?? "Presensi belum/telah ditutup.") + "</p>";
+            }
+        }).catch(err => {
+            console.error("Gagal mengambil QR:", err);
+            qrDiv.innerHTML = "<p style='color:red'>Gagal memuat QR</p>";
+        });
+}
+
+
+    ambilQRCode();
+    setInterval(ambilQRCode, 180000);
+    </script>
 
 </body>
 </html>

@@ -109,10 +109,37 @@ var notif_keluar = document.getElementById('notif_keluar');
 var radius_sekolah = document.getElementById('radius_sekolah');
 var lokasi = document.getElementById('lokasi');
 let scanner;
+let kodeQRValid = '';
 
 $("#presensi").hide();
 
+// ✅ Ambil QR secara berkala tiap 30 menit
+function ambilQRCode() {
+    fetch('/absensi/qr-terbaru?ts=' + new Date().getTime())
+        .then(res => res.json())
+        .then(data => {
+             if (!data || !data.kode) return;
 
+            // Jika ingin tampilkan QR di halaman:
+            if (document.getElementById("qrCode")) {
+                document.getElementById("qrCode").innerHTML = "";
+                new QRCode(document.getElementById("qrCode"), {
+                    text: kodeQRValid,
+                    width: 200,
+                    height: 200,
+                });
+            }
+        });
+}
+
+ambilQRCode(); // Ambil pertama kali
+setInterval(ambilQRCode, 1800000); // Refresh tiap 30 menit
+
+setTimeout(() => {
+    mulaiScanQR();
+}, 1000);
+
+// ✅ Mulai scan QR dengan validasi kode dinamis
 function mulaiScanQR() {
     scanner = new Instascan.Scanner({ video: document.getElementById('preview'), mirror: false });
 
