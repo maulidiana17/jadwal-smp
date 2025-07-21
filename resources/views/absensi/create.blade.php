@@ -70,7 +70,7 @@
 <!-- Section QR Code Scanner -->
 <div class="row mt-2" id="section-scanner">
     <div class="col-12 text-center">
-        <video id="preview" style="width: 100%; border-radius: 5px;" playsinline></video>
+        <video id="preview"></video>
         <div id="reader"></div>
     </div>
 </div>
