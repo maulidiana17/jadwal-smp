@@ -406,7 +406,9 @@
 
 @push('myscript')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/webcamjs/1.0.26/webcam.min.js"></script>
-<script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/instascan@1.0.0/instascan.min.js"></script>
+
+{{--  <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>  --}}
 
 <script>
 var notif_masuk = document.getElementById('notif_masuk');
