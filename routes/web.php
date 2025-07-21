@@ -169,7 +169,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 //Middleware login admin dan guru_dini
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/dashboardadmin', [DashboardController::class, 'dashboardadmin']);
-    
+
 //Admin
 Route::get('/absensi/kelas', [AdminController::class, 'kelas'])->middleware('auth');
 Route::get('/admin/index', [AdminController::class, 'index'])->name('admin.index');
@@ -207,9 +207,10 @@ Route::get('/absensi/izinsakit', [AbsensiController::class, 'izinsakit'])->name(
 Route::post('/absensi/approvedizinsakit', [AbsensiController::class, 'approvedizinsakit'])->name('absensi.approvedizinsakit');
 Route::get('/absensi/{id}/batalkanizinsakit', [AbsensiController::class, 'batalkanizinsakit'])->name('absensi.batalkanizinsakit');
 Route::delete('/absensi/{id}/hapusizinsakit', [AbsensiController::class, 'hapusIzinSakit']);
-Route::get('/absensi/qr-admin', [AbsensiController::class, 'showQrPresensi'])->middleware('auth');
+// Route::get('/absensi/qr-admin', [AbsensiController::class, 'showQrPresensi'])->middleware('auth');
 // Route::get('/absensi/kode-qr', [AbsensiController::class, 'getKodeQr']);
-Route::get('/absensi/qr-terbaru', [AbsensiController::class, 'getQrTerbaru']);
+// Route::get('/absensi/qr-terbaru', [AbsensiController::class, 'getQrTerbaru']);
+Route::get('/absensi/qr-admin', [AbsensiController::class, 'showQrPresensi']);
 Route::get('/absensi/maps', [AbsensiController::class, 'maps'])->name('absensi.maps');
 
 

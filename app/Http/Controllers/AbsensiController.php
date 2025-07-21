@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 use App\Exports\RekapPresensiExport;
 use App\Models\QRAbsen;
 use App\Models\QRValidasi;
+use Carbon\Carbon;
 use DateInterval;
 use DatePeriod;
 use DateTime;
@@ -223,6 +224,40 @@ class AbsensiController extends Controller
     }
 
 
+
+public function showQrPresensi()
+{
+    $now = Carbon::now();
+
+    // Cek apakah sudah ada QR aktif
+    $qr = DB::table('qr_validasi')
+        ->where('tanggal', $now->toDateString())
+        ->where('expired_at', '>', $now)
+        ->orderBy('created_at', 'desc')
+        ->first();
+
+    if (!$qr) {
+        // Generate QR baru jika belum ada
+        $randomCode = strtoupper(Str::random(6)); // XYZ123
+        $kode_qr = 'ABSEN-SPENSA-' . $now->toDateString() . '-' . $randomCode;
+
+        DB::table('qr_validasi')->insert([
+            'kode_qr'    => $kode_qr,
+            'tanggal'    => $now->toDateString(),
+            'created_at' => $now,
+            'updated_at' => $now,
+            'expired_at' => $now->copy()->addMinutes(30), // misal expired 30 menit
+        ]);
+    } else {
+        $kode_qr = $qr->kode_qr;
+    }
+
+    return view('absensi.qr-admin', [
+        'kode_qr' => $kode_qr,
+        'pesan'   => 'QR Aktif: Silakan gunakan untuk presensi.',
+        'aktif'   => true,
+    ]);
+}
 
 
 

@@ -7,7 +7,19 @@
         <div class="row">
             <div class="col-12">
                 <div class="card card-stats card-round">
-                    <div class="card-body text-center area-cetak">
+                   <div class="section full text-center mt-3">
+                        <h3>QR Presensi Hari Ini</h3>
+
+                        @if ($aktif && $kode_qr)
+                            <div class="my-3">
+                                {!! QrCode::size(250)->generate($kode_qr) !!}
+                            </div>
+                            <p class="text-success">{{ $pesan }}</p>
+                        @else
+                            <p class="text-danger">{{ $pesan }}</p>
+                        @endif
+                    </div>
+                    {{--  <div class="card-body text-center area-cetak">
                         <h3>QR Presensi Hari Ini</h3>
                         <p>Tempel QR ini di sekolah. Berlaku hanya hari ini.</p>
 
@@ -16,7 +28,7 @@
                             <p class="mt-2">QR ini akan berubah setiap 30 menit</p>
                         </div>
 
-                    </div>
+                    </div>  --}}
                 </div>
             </div>
         </div>
@@ -24,7 +36,7 @@
     </div>
 </div>
 @endsection
-
+{{--
 @push('myscript')
 <style>
 @media print {
@@ -81,4 +93,4 @@ setInterval(ambilQRCode, 1800000);
 
 
 @endpush
-
+  --}}
