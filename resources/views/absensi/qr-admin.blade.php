@@ -1,4 +1,4 @@
-@extends('layouts.admin.dashboard')
+{{--  @extends('layouts.admin.dashboard')
 
 @section('content')
 <div class="container">
@@ -81,3 +81,36 @@ setInterval(ambilQRCode, 1800000);
 
 
 @endpush
+
+  --}}
+
+
+
+@extends('layouts.admin.dashboard')
+
+@section('content')
+<div class="container text-center mt-5">
+    <div class="page-inner">
+        <div class="row">
+            <div class="col-12">
+                <h3>QR Presensi Hari Ini</h3>
+    <p>Tempel QR ini di sekolah. Berlaku hanya hari ini.</p>
+
+    @if ($qr)
+        <div id="qrCode"></div>
+        <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+        <script>
+            new QRCode(document.getElementById("qrCode"), {
+                text: "{{ $qr->kode_qr }}",
+                width: 250,
+                height: 250
+            });
+        </script>
+    @else
+        <p>QR tidak tersedia.</p>
+    @endif
+            </div>
+        </div>
+    </div>
+</div>
+@endsection

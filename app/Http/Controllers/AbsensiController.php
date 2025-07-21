@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Exports\RekapPresensiExport;
 use App\Models\QRAbsen;
+use App\Models\QRValidasi;
 use DateInterval;
 use DatePeriod;
 use DateTime;
@@ -222,71 +223,125 @@ class AbsensiController extends Controller
     }
 
 
-public function showQrPresensi()
-{
-    $now = now();
+// public function showQrPresensi()
+// {
+//     $now = now();
 
-    // Cari QR yang masih aktif
-    $qr = DB::table('qr_validasi')
-        ->where('tanggal', date('Y-m-d'))
-        ->where('expired_at', '>', $now)
-        ->orderBy('created_at', 'desc')
-        ->first();
+//     // Cari QR yang masih aktif
+//     $qr = DB::table('qr_validasi')
+//         ->where('tanggal', date('Y-m-d'))
+//         ->where('expired_at', '>', $now)
+//         ->orderBy('created_at', 'desc')
+//         ->first();
 
-    if (!$qr) {
-        // Generate QR baru
-        $kode = "ABSEN-" . date('Ymd-His') . "-" . Str::random(5);
-        $expiredAt = $now->copy()->addMinutes(30);
+//     if (!$qr) {
+//         // Generate QR baru
+//         $kode = "ABSEN-" . date('Ymd-His') . "-" . Str::random(5);
+//         $expiredAt = $now->copy()->addMinutes(30);
 
-        DB::table('qr_validasi')->insert([
-            'tanggal'     => date('Y-m-d'),
-            'kode_qr'     => $kode,
-            'created_at'  => $now,
-            'updated_at'  => $now,
-            'expired_at'  => $expiredAt
-        ]);
-    } else {
-        $kode = $qr->kode_qr;
+//         DB::table('qr_validasi')->insert([
+//             'tanggal'     => date('Y-m-d'),
+//             'kode_qr'     => $kode,
+//             'created_at'  => $now,
+//             'updated_at'  => $now,
+//             'expired_at'  => $expiredAt
+//         ]);
+//     } else {
+//         $kode = $qr->kode_qr;
+//     }
+
+//     return view('absensi.qr-admin', compact('kode'));
+// }
+
+// public function getQrTerbaru()
+// {
+//     $now = \Carbon\Carbon::now();
+
+//     // Ambil QR terbaru yang masih aktif dan berlaku hari ini
+//     $qr = \App\Models\QRValidasi::where('tanggal', $now->toDateString())
+//         ->where('expired_at', '>', $now)
+//         ->orderByDesc('created_at')
+//         ->first();
+
+//     if (!$qr) {
+//         return response()->json([
+//             'kode' => null,
+//             'aktif' => false,
+//             'pesan' => 'QR belum tersedia atau sudah kedaluwarsa',
+//         ]);
+//     }
+
+//     return response()->json([
+//         'kode' => $qr->kode_qr,
+//         'aktif' => true,
+//     ]);
+// }
+
+//     public function displayQr($token)
+// {
+//     $tokenValid = 'qrcodeSMPN1GENTENG';
+
+//     if ($token !== $tokenValid) {
+//         abort(403, 'Akses Ditolak');
+//     }
+
+//     return view('absensi.qr-display');
+// }
+        public function showQrPresensi(){
+        $now = now();
+
+        $qr = QRValidasi::where('tanggal', date('Y-m-d'))
+            ->where('expired_at', '>', $now)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        // Jika belum ada QR hari ini, buat baru
+        if (!$qr) {
+            $qr = QRValidasi::create([
+                'kode_qr' => 'ABSEN-' . date('Ymd-His') . '-' . strtoupper(Str::random(5)),
+                'tanggal' => date('Y-m-d'),
+                'expired_at' => now()->addMinutes(30)
+            ]);
+        }
+
+        return view('absensi.qr-admin', compact('qr'));
     }
 
-    return view('absensi.qr-admin', compact('kode'));
-}
+    // ✅ API ambil QR terbaru
+    public function getQrTerbaru()
+    {
+        $now = now();
 
-public function getQrTerbaru()
-{
-    $now = \Carbon\Carbon::now();
+        $qr = QRValidasi::where('tanggal', date('Y-m-d'))
+            ->where('expired_at', '>', $now)
+            ->orderBy('created_at', 'desc')
+            ->first();
 
-    // Ambil QR terbaru yang masih aktif dan berlaku hari ini
-    $qr = \App\Models\QRValidasi::where('tanggal', $now->toDateString())
-        ->where('expired_at', '>', $now)
-        ->orderByDesc('created_at')
-        ->first();
+        if (!$qr) {
+            return response()->json([
+                'aktif' => false,
+                'pesan' => 'QR belum tersedia atau sudah kadaluarsa.'
+            ]);
+        }
 
-    if (!$qr) {
         return response()->json([
-            'kode' => null,
-            'aktif' => false,
-            'pesan' => 'QR belum tersedia atau sudah kedaluwarsa',
+            'aktif' => true,
+            'kode' => $qr->kode_qr
         ]);
     }
 
-    return response()->json([
-        'kode' => $qr->kode_qr,
-        'aktif' => true,
-    ]);
-}
+    // ✅ Tampilan fullscreen untuk layar monitor
+    public function displayQr()
+    {
+        $now = now();
 
+        $qr = QRValidasi::where('tanggal', date('Y-m-d'))
+            ->where('expired_at', '>', $now)
+            ->orderBy('created_at', 'desc')
+            ->first();
 
-    public function displayQr($token)
-{
-    $tokenValid = 'qrcodeSMPN1GENTENG';
-
-    if ($token !== $tokenValid) {
-        abort(403, 'Akses Ditolak');
+        return view('absensi.qr-display', compact('qr'));
     }
-
-    return view('absensi.qr-display');
-}
 
 
     public function izin(){

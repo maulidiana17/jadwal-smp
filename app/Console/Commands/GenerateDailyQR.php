@@ -27,37 +27,25 @@ class GenerateDailyQR extends Command
      * Execute the console command.
      */
     public function handle()
-{
-    $now = Carbon::now();
+    {
+        $today = Carbon::today()->toDateString();
 
-    // Cek apakah dalam rentang waktu 05:00 - 08:00
-    // if ($now->between(Carbon::today()->setTime(5, 0), Carbon::today()->setTime(8, 0))) {
+        $qr = QRValidasi::where('tanggal', $today)->first();
 
-        // Cari QR Code yang masih aktif hari ini
-        $qrAktif = QRValidasi::where('tanggal', $now->toDateString())
-                    ->where('expired_at', '>', $now)
-                    ->first();
+        if (!$qr) {
+            $kode = "ABSEN-" . date('Ymd-His') . "-" . strtoupper(Str::random(6));
+            $expiredAt = now()->addMinutes(30);
 
-        if ($qrAktif) {
-            $this->info('QR Code masih aktif, tidak membuat baru. Kode: ' . $qrAktif->kode_qr);
-            return;
+            QRValidasi::create([
+                'kode_qr' => $kode,
+                'tanggal' => $today,
+                'expired_at' => $expiredAt
+            ]);
+
+            $this->info('QR baru berhasil dibuat: ' . $kode);
+        } else {
+            $this->info('QR hari ini sudah ada.');
         }
-
-        // Hapus QR lama yang sudah expired
-        QRValidasi::where('expired_at', '<', $now)->delete();
-
-        // Buat QR baru
-        QRValidasi::create([
-            'kode_qr' => 'ABSEN-' . $now->format('Ymd-His') . '-' . Str::random(5),
-            'tanggal' => $now->toDateString(),
-            'expired_at' => $now->copy()->addMinutes(30)
-        ]);
-
-        $this->info('QR Code baru berhasil dibuat pada: ' . $now->toDateTimeString());
-
-    // } else {
-    //     $this->info('Di luar jadwal pembuatan QR (05:00 - 08:00)');
-    // }
-}
+    }
 
 }

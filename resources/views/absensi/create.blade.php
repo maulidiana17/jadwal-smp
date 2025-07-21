@@ -118,7 +118,7 @@ function ambilQRCode() {
     fetch('/absensi/qr-terbaru?ts=' + new Date().getTime())
         .then(res => res.json())
         .then(data => {
-            kodeQRValid = data.kode;
+             if (!data || !data.kode) return;
 
             // Jika ingin tampilkan QR di halaman:
             if (document.getElementById("qrCode")) {
@@ -133,7 +133,7 @@ function ambilQRCode() {
 }
 
 ambilQRCode(); // Ambil pertama kali
-setInterval(ambilQRCode, 1800000); // Refresh tiap 30 detik
+setInterval(ambilQRCode, 1800000); // Refresh tiap 30 menit
 
 setTimeout(() => {
     mulaiScanQR();
@@ -145,7 +145,12 @@ function mulaiScanQR() {
 
     scanner.addListener('scan', function (content) {
         if (content.trim().toUpperCase() === kodeQRValid.trim().toUpperCase()) {
-            alert("QR Valid, silakan lanjut presensi.");
+            Swal.fire({
+                title: 'QR Valid',
+                text: 'Silakan lanjutkan presensi.',
+                icon: 'success'
+                });
+
             scanner.stop();
             document.getElementById('preview').style.display = "none";
 
@@ -155,7 +160,12 @@ function mulaiScanQR() {
                 getLokasi();
             }, 1500);
         } else {
-            alert("QR tidak valid atau sudah kadaluarsa.");
+            Swal.fire({
+                title: 'QR Tidak Valid atau Sudah Kadaluarsa',
+                text: 'Silakan ulangi.',
+                icon: 'error'
+                });
+
         }
     });
 
@@ -167,8 +177,15 @@ function mulaiScanQR() {
             alert('Kamera tidak tersedia!');
         }
     }).catch(function (e) {
+            console.error(e);
+            alert('Tidak bisa mengakses kamera: ' + e);
+        });.catch(function (e) {
         console.error(e);
-        alert('Tidak bisa mengakses kamera: ' + e);
+        Swal.fire({
+            title: 'Error Kamera',
+            text: 'Tidak bisa mengakses kamera. Pastikan browser kamu memiliki izin kamera.',
+            icon: 'error'
+        });
     });
 }
 
