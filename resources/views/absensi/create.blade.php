@@ -127,8 +127,8 @@
 
     // Sembunyikan elemen saat awal
     document.addEventListener("DOMContentLoaded", function () {
-        document.querySelector(".webcam-camera").style.display = "block";
-        document.getElementById("presensi").style.display = "block";
+        document.querySelector(".webcam-camera").style.display = "none";
+        document.getElementById("presensi").style.display = "none";
     });
 
     let scanner = new Instascan.Scanner({
@@ -139,33 +139,38 @@
     scanner.addListener('scan', function (content) {
         document.getElementById("reader").innerHTML = `
         <div class='alert alert-success text-center' style="margin-top: 60px;">
-            QR Valid: Silahkan lanjutkan presensi!
+            QR Valid: ${content}
         </div>`;
 
         document.getElementById("preview").style.display = "none";
 
-        scanner.stop();
+        scanner.stop(); // stop QR scanner segera
 
+        // Tunda 1.5 detik lalu tampilkan webcam dan aktifkan lokasi
         setTimeout(() => {
-        Webcam.set({
-            width: window.innerWidth * 0.9,
-            height: window.innerHeight * 0.4,
-            image_format: 'jpeg',
-            jpeg_quality: 80,
-        });
-        Webcam.attach('.webcam-camera');
+            document.querySelector(".webcam-camera").style.display = "block";
+            document.getElementById("presensi").style.display = "block";
 
-        Webcam.on('error', function (err) {
-            console.error("Webcam.js Error: ", err);
-            alert("Webcam.js Error: " + err.message);
-        });
+            // Mulai webcam (gunakan Webcam.js)
+            Webcam.set({
+                width: window.innerWidth * 0.9,
+                height: window.innerHeight * 0.4,
+                image_format: 'jpeg',
+                jpeg_quality: 80,
+            });
+            Webcam.attach('.webcam-camera');
 
-        // Deteksi lokasi
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(successCallback, errorCallback);
-        }
-    }, 1500);
+            Webcam.on('error', function (err) {
+                console.error("Webcam.js Error: ", err);
+                alert("Webcam.js Error: " + err.message);
+            });
 
+            // Deteksi lokasi
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(successCallback, errorCallback);
+            }
+        }, 1500);
+    });
 
     Instascan.Camera.getCameras().then(function (cameras) {
         if (cameras.length > 0) {
@@ -201,12 +206,7 @@
             fillOpacity: 0.5,
             radius: radius
         }).addTo(map);
-
-        // Tampilkan kamera dan tombol setelah lokasi OK
-        document.querySelector(".webcam-camera").style.display = "block";
-        document.getElementById("presensi").style.display = "block";
     }
-
 
     function errorCallback() {
         alert("Gagal mendapatkan lokasi.");
