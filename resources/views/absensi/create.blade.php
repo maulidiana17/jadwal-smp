@@ -1,4 +1,4 @@
-@extends('layouts.absen')
+{{--  @extends('layouts.absen')
   @section('header')
   <!-- Meta Viewport untuk memastikan responsivitas -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -239,7 +239,7 @@
         });
     });
 </script>
-@endpush
+@endpush  --}}
 
 
 {{--  @push('myscript')
@@ -386,7 +386,6 @@
     </script>
 @endpush  --}}
 
-{{--
   @extends('layouts.absen')
   @section('header')
   <!-- Meta Viewport untuk memastikan responsivitas -->
@@ -585,8 +584,4 @@
       });
   </script>
   @endpush
-
-  --}}
-
-
 
