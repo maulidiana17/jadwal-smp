@@ -118,7 +118,8 @@ function ambilQRCode() {
     fetch('/absensi/qr-terbaru?ts=' + new Date().getTime())
         .then(res => res.json())
         .then(data => {
-             if (!data || !data.kode) return;
+            if (!data || !data.kode) return;
+            kodeQRValid = data.kode;
 
             // Jika ingin tampilkan QR di halaman:
             if (document.getElementById("qrCode")) {
@@ -133,7 +134,7 @@ function ambilQRCode() {
 }
 
 ambilQRCode(); // Ambil pertama kali
-setInterval(ambilQRCode, 1800000); // Refresh tiap 30 menit
+setInterval(ambilQRCode, 1800000); // Refresh tiap 30 detik
 
 setTimeout(() => {
     mulaiScanQR();
@@ -145,12 +146,7 @@ function mulaiScanQR() {
 
     scanner.addListener('scan', function (content) {
         if (content.trim().toUpperCase() === kodeQRValid.trim().toUpperCase()) {
-            Swal.fire({
-                title: 'QR Valid',
-                text: 'Silakan lanjutkan presensi.',
-                icon: 'success'
-                });
-
+            alert("QR Valid, silakan lanjut presensi.");
             scanner.stop();
             document.getElementById('preview').style.display = "none";
 
@@ -160,12 +156,7 @@ function mulaiScanQR() {
                 getLokasi();
             }, 1500);
         } else {
-            Swal.fire({
-                title: 'QR Tidak Valid atau Sudah Kadaluarsa',
-                text: 'Silakan ulangi.',
-                icon: 'error'
-                });
-
+            alert("QR tidak valid atau sudah kadaluarsa.");
         }
     });
 
@@ -177,15 +168,8 @@ function mulaiScanQR() {
             alert('Kamera tidak tersedia!');
         }
     }).catch(function (e) {
-            console.error(e);
-            alert('Tidak bisa mengakses kamera: ' + e);
-        });.catch(function (e) {
         console.error(e);
-        Swal.fire({
-            title: 'Error Kamera',
-            text: 'Tidak bisa mengakses kamera. Pastikan browser kamu memiliki izin kamera.',
-            icon: 'error'
-        });
+        alert('Tidak bisa mengakses kamera: ' + e);
     });
 }
 
