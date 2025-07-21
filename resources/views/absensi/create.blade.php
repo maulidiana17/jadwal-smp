@@ -60,7 +60,6 @@
 <div class="row" style="margin-top: 70px; @if($cek > 0) display:none; @endif">
     <div class="col-12 text-center">
         <video id="preview"></video>
-        <div id="qrMessage" class="alert alert-warning mt-3" style="display:none;"></div>
     </div>
 </div>
 
