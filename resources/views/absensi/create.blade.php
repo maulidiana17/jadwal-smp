@@ -50,6 +50,14 @@
         display: block;
         border-radius: 5px;
     }
+     #reader {
+        margin-top: 1rem;
+    }
+
+    .webcam-camera,
+    #presensi {
+        display: none !important;
+    }
 </style>
 
 <!-- Preload Leaflet CSS untuk peta -->
@@ -116,7 +124,13 @@
     var notif_masuk = document.getElementById('notif_masuk');
     var notif_keluar = document.getElementById('notif_keluar');
     var radius_sekolah = document.getElementById('radius_sekolah');
-    let image = ''; // ✅ Hindari penggunaan variabel yang belum dideklarasikan
+    let image = '';
+
+    // Sembunyikan elemen saat awal
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelector(".webcam-camera").style.display = "none";
+        document.getElementById("presensi").style.display = "none";
+    });
 
     let scanner = new Instascan.Scanner({
         video: document.getElementById('preview'),
@@ -124,22 +138,37 @@
     });
 
     scanner.addListener('scan', function(content) {
-        // QR Code berhasil dipindai
         document.getElementById("reader").innerHTML = `
         <div class='alert alert-success text-center'>
             QR Valid: ${content}
         </div>`;
 
-        document.getElementById("preview").style.display = "none"; // ✅ Sembunyikan scanner setelah sukses
-
-        // Tampilkan webcam dan tombol presensi
+        document.getElementById("preview").style.display = "none";
         document.querySelector(".webcam-camera").style.display = "block";
         document.getElementById("presensi").style.display = "block";
 
-        scanner.stop();
+        scanner.stop(); // stop QR scanner
+
+        // Mulai webcam (gunakan Webcam.js)
+        Webcam.set({
+            width: window.innerWidth * 0.9,
+            height: window.innerHeight * 0.4,
+            image_format: 'jpeg',
+            jpeg_quality: 80,
+        });
+        Webcam.attach('.webcam-camera');
+
+        Webcam.on('error', function(err) {
+            console.error("Webcam.js Error: ", err);
+            alert("Webcam.js Error: " + err.message);
+        });
+
+        // Deteksi lokasi
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(successCallback, errorCallback);
+        }
     });
 
-    // Mendeteksi kamera belakang
     Instascan.Camera.getCameras().then(function(cameras) {
         if (cameras.length > 0) {
             let backCam = cameras.find(cam => cam.name.toLowerCase().includes('back')) || cameras[0];
@@ -152,27 +181,9 @@
         alert('Gagal mengakses kamera: ' + e);
     });
 
-    Webcam.set({
-        width: window.innerWidth * 0.9,
-        height: window.innerHeight * 0.4,
-        image_format: 'jpeg',
-        jpeg_quality: 80,
-    });
-
-    Webcam.attach('.webcam-camera');
-
-    Webcam.on('error', function(err) {
-        console.error("Webcam.js Error: ", err);
-        alert("Webcam.js Error: " + err.message);
-    });
-
-    var lokasi = document.getElementById('lokasi');
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(successCallback, errorCallback);
-    }
-
     function successCallback(posisi) {
-        lokasi.value = posisi.coords.latitude + "," + posisi.coords.longitude;
+        document.getElementById('lokasi').value = posisi.coords.latitude + "," + posisi.coords.longitude;
+
         var map = L.map('map').setView([posisi.coords.latitude, posisi.coords.longitude], 18);
         var lokasi_sekolah = "{{ $lok_sekolah->lokasi_sekolah }}";
         var lok = lokasi_sekolah.split(",");
@@ -184,6 +195,7 @@
             maxZoom: 19,
             attribution: '&copy; OpenStreetMap'
         }).addTo(map);
+
         L.marker([posisi.coords.latitude, posisi.coords.longitude]).addTo(map);
         L.circle([lat_sekolah, long_sekolah], {
             color: 'red',
@@ -245,4 +257,5 @@
         });
     });
 </script>
+
 @endpush
