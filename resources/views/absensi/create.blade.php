@@ -419,35 +419,28 @@ let kodeQRValid = '';
 
 $("#presensi").hide();
 
-function ambilQRCode() {
-    fetch('/absensi/qr-terbaru')
-        .then(res => res.json())
-        .then(data => {
-            kodeQRValid = data.kode;
-
-            if (document.getElementById("qrCode")) {
-                document.getElementById("qrCode").innerHTML = "";
-                new QRCode(document.getElementById("qrCode"), {
-                    text: kodeQRValid,
-                    width: 200,
-                    height: 200,
-                });
-            }
-        });
-}
-
-ambilQRCode();
-setInterval(ambilQRCode, 180000);
-
-setTimeout(() => {
-    mulaiScanQR();
-}, 1000);
+fetch('/absensi/qr-terbaru')
+    .then(res => res.json())
+    .then(data => {
+        if (data.aktif && data.kode) {
+            kodeQRValid = data.kode.trim();
+            mulaiScanQR();
+        } else {
+            alert("QR tidak aktif atau belum tersedia.");
+        }
+    });
 
 function mulaiScanQR() {
-    scanner = new Instascan.Scanner({ video: document.getElementById('preview'), mirror: false });
+    const videoPreview = document.getElementById('preview');
+    if (!videoPreview) {
+        console.error("Elemen #preview tidak ditemukan");
+        return;
+    }
+
+    const scanner = new Instascan.Scanner({ video: videoPreview, mirror: false });
 
     scanner.addListener('scan', function (content) {
-        if (content.trim() === kodeQRValid.trim()) {
+        if (content.trim() === kodeQRValid) {
             alert("QR Valid, silakan lanjut presensi.");
             scanner.stop();
             document.getElementById('preview').style.display = "none";
@@ -464,14 +457,14 @@ function mulaiScanQR() {
 
     Instascan.Camera.getCameras().then(function (cameras) {
         if (cameras.length > 0) {
-            let selectedCamera = cameras.length > 1 ? cameras[1] : cameras[0];
-            scanner.start(selectedCamera);
+            const selected = cameras.length > 1 ? cameras[1] : cameras[0];
+            scanner.start(selected);
         } else {
-            alert('Kamera tidak tersedia!');
+            alert('Kamera tidak ditemukan.');
         }
     }).catch(function (e) {
         console.error(e);
-        alert('Tidak bisa mengakses kamera: ' + e);
+        alert('Gagal mengakses kamera: ' + e);
     });
 }
 
