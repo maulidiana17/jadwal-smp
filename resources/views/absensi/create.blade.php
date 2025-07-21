@@ -1,4 +1,4 @@
-
+<!-- Benar fiks -->
 @extends('layouts.absen')
 @section('header')
 <!-- Meta Viewport untuk memastikan responsivitas -->
@@ -142,7 +142,7 @@
     scanner.addListener('scan', function (content) {
         document.getElementById("reader").innerHTML = `
         <div class='alert alert-success text-center' style="margin-top: 60px;">
-            QR Valid: Silahkan lanjutkan presensi!
+            QR Valid: Silahkan lanjutkan presensi kamera!
         </div>`;
 
         document.getElementById("preview").style.display = "none";
