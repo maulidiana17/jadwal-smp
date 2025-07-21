@@ -47,6 +47,7 @@
       #preview {
         width: 80%;
         margin: auto;
+        margin-top: 70px;
         display: block;
         border-radius: 5px;
     }
@@ -76,7 +77,7 @@
 </div>
 
 <!-- Section Webcam -->
-<div class="row" style="margin-top: 70px;">
+<div class="row">
     <div class="col-12">
         <input type="hidden" id="lokasi">
         <div class="webcam-camera"></div>
