@@ -38,10 +38,10 @@ class AbsensiController extends Controller
         $tgl_absen = date("Y-m-d");
         $jam = date("H:i:s");
         $jamBuka  = "05:00:00";
-        $jamTutup = "15:00:00";
+        $jamTutup = "08:00:00";
 
         if ($jam < $jamBuka || $jam > $jamTutup) {
-            echo "error|Presensi hanya diperbolehkan antara pukul 05:00 - 07:45|jam_invalid";
+            echo "error|Presensi hanya diperbolehkan antara pukul 05:00 - 08:00|jam_invalid";
             return;
         }
         $lok_sekolah = DB::table('konfigurasi_lokasi')->where('id',1)->first();
