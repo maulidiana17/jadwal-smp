@@ -438,7 +438,7 @@ function mulaiScanQR() {
         return;
     }
 
-    const scanner = new Instascan.Scanner({ video: videoPreview, mirror: false });
+    scanner = new Instascan.Scanner({ video: videoPreview, mirror: false });
 
     scanner.addListener('scan', function (content) {
         if (content.trim() === kodeQRValid) {
