@@ -260,7 +260,7 @@ public function getQrTerbaru()
 
     // Atur waktu buka dan tutup presensi
     $jamBuka  = '05:00';
-    $jamTutup = '08:00';
+    $jamTutup = '15:00';
 
     // Cek apakah sekarang di luar jam presensi
     if ($jamSekarang < $jamBuka || $jamSekarang > $jamTutup) {
