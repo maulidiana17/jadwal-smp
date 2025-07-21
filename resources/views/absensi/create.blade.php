@@ -157,7 +157,7 @@
                 qrCodeMessage => {
                     // Setelah QR discan
                     html5QrCode.stop();
-                    document.getElementById("reader").innerHTML = <div class='alert alert-success text-center'>QR Valid: ${qrCodeMessage}</div>;
+                    document.getElementById("reader").innerHTML = `<div class='alert alert-success text-center'>QR Valid: ${qrCodeMessage}</div>`;
 
                     // Tampilkan kamera dan tombol
                     document.getElementById("section-camera").style.display = 'block';
