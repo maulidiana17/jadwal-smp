@@ -254,49 +254,28 @@ public function showQrPresensi()
 
 public function getQrTerbaru()
 {
-    $now = now();
-    $jamSekarang = $now->format('H:i');
+    $now = \Carbon\Carbon::now();
 
-    // Atur waktu buka dan tutup presensi
-    $jamBuka  = '05:00';
-    $jamTutup = '15:00';
-
-    // Cek apakah sekarang di luar jam presensi
-    if ($jamSekarang < $jamBuka || $jamSekarang > $jamTutup) {
-        return response()->json([
-            'kode' => null,
-            'aktif' => false,
-            'pesan' => 'Presensi hanya dibuka pukul 05:00 - 07:45'
-        ]);
-    }
-
-    // Ambil QR terbaru yang belum expired
-    $qr = DB::table('qr_validasi')
-        ->where('tanggal', date('Y-m-d'))
+    // Ambil QR terbaru yang masih aktif dan berlaku hari ini
+    $qr = \App\Models\QRValidasi::where('tanggal', $now->toDateString())
         ->where('expired_at', '>', $now)
-        ->orderBy('created_at', 'desc')
+        ->orderByDesc('created_at')
         ->first();
 
     if (!$qr) {
-        $kode = "ABSEN-" . date('Ymd-His') . "-" . Str::upper(Str::random(5));
-        $expiredAt = $now->copy()->addMinutes(30);
-
-        DB::table('qr_validasi')->insert([
-            'tanggal'     => date('Y-m-d'),
-            'kode_qr'     => $kode,
-            'created_at'  => $now,
-            'updated_at'  => $now,
-            'expired_at'  => $expiredAt
+        return response()->json([
+            'kode' => null,
+            'aktif' => false,
+            'pesan' => 'QR belum tersedia atau sudah kedaluwarsa',
         ]);
-    } else {
-        $kode = $qr->kode_qr;
     }
 
     return response()->json([
-        'kode' => $kode,
-        'aktif' => true
+        'kode' => $qr->kode_qr,
+        'aktif' => true,
     ]);
 }
+
 
     public function displayQr($token)
 {

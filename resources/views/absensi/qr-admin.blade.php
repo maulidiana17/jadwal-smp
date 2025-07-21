@@ -13,7 +13,7 @@
 
                         <div class="text-center">
                             <div id="qrCode" style="display: inline-block;"></div>
-                            <p class="mt-2">QR ini akan berubah setiap 30 detik</p>
+                            <p class="mt-2">QR ini akan berubah setiap 30 menit</p>
                         </div>
 
                     </div>
