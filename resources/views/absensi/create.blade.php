@@ -405,181 +405,179 @@
 @endsection
 
 @push('myscript')
-<script src="https://cdnjs.cloudflare.com/ajax/libs/webcamjs/1.0.26/webcam.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/instascan@1.0.0/instascan.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/webcamjs/1.0.26/webcam.min.js"></script>
+    <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
 
-{{--  <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>  --}}
+        <script>
+    var notif_masuk = document.getElementById('notif_masuk');
+    var notif_keluar = document.getElementById('notif_keluar');
+    var radius_sekolah = document.getElementById('radius_sekolah');
+    var lokasi = document.getElementById('lokasi');
+    let scanner;
+    let kodeQRValid = '';
 
-<script>
-var notif_masuk = document.getElementById('notif_masuk');
-var notif_keluar = document.getElementById('notif_keluar');
-var radius_sekolah = document.getElementById('radius_sekolah');
-var lokasi = document.getElementById('lokasi');
-let scanner;
-let kodeQRValid = '';
+    $("#presensi").hide();
 
-$("#presensi").hide();
-
-fetch('/absensi/qr-terbaru')
-    .then(res => res.json())
-    .then(data => {
-        if (data.aktif && data.kode) {
-            kodeQRValid = data.kode.trim();
-            mulaiScanQR();
-        } else {
-            alert("QR tidak aktif atau belum tersedia.");
-        }
-    });
-
-function mulaiScanQR() {
-    const videoPreview = document.getElementById('preview');
-    if (!videoPreview) {
-        console.error("Elemen #preview tidak ditemukan");
-        return;
-    }
-
-    scanner = new Instascan.Scanner({ video: videoPreview, mirror: false });
-
-    scanner.addListener('scan', function (content) {
-        if (content.trim() === kodeQRValid) {
-            alert("QR Valid, silakan lanjut presensi.");
-            scanner.stop();
-            document.getElementById('preview').style.display = "none";
-
-            setTimeout(() => {
-                $("#presensi").show();
-                aktifkanWebcam();
-                getLokasi();
-            }, 1500);
-        } else {
-            alert("QR tidak valid atau sudah kadaluarsa.");
-        }
-    });
-
-    Instascan.Camera.getCameras().then(function (cameras) {
-        if (cameras.length > 0) {
-            const selected = cameras.length > 1 ? cameras[1] : cameras[0];
-            scanner.start(selected);
-        } else {
-            alert('Kamera tidak ditemukan.');
-        }
-    }).catch(function (e) {
-        console.error(e);
-        alert('Gagal mengakses kamera: ' + e);
-    });
-}
-
-function aktifkanWebcam() {
-    Webcam.set({
-        width: window.innerWidth * 0.9,
-        height: window.innerHeight * 0.4,
-        image_format: 'jpeg',
-        jpeg_quality: 80,
-    });
-
-    Webcam.attach('.webcam-camera');
-
-    Webcam.on('error', function(err) {
-        console.error("Webcam.js Error: ", err);
-        alert("Webcam.js Error: " + err.message);
-    });
-}
-
-function getLokasi() {
-    if(navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(successCallback, errorCallback, {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
-        });
-    }
-}
-
-function successCallback(posisi) {
-    lokasi.value = posisi.coords.latitude + "," + posisi.coords.longitude;
-    var map = L.map('map').setView([posisi.coords.latitude, posisi.coords.longitude], 18);
-    var lokasi_sekolah = "{{ $lok_sekolah->lokasi_sekolah }}";
-    var lok = lokasi_sekolah.split(",");
-    var lat_sekolah = lok[0];
-    var long_sekolah = lok[1];
-    var radius = "{{ $lok_sekolah->radius }}";
-
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap'
-    }).addTo(map);
-
-    L.marker([posisi.coords.latitude, posisi.coords.longitude]).addTo(map);
-    L.circle([lat_sekolah, long_sekolah], {
-        color: 'red',
-        fillColor: '#f03',
-        fillOpacity: 0.5,
-        radius: radius
-    }).addTo(map);
-}
-
-function errorCallback() {
-    alert("Gagal mendapatkan lokasi.");
-}
-
-@if($cek > 0)
-    $("#presensi").show();
-    aktifkanWebcam();
-    getLokasi();
-@endif
-
-$("#presensi").click(function(e){
-    Webcam.snap(function(uri){
-        image = uri;
-    });
-
-    var lokasi = $("#lokasi").val();
-
-    $.ajax({
-        type:'POST',
-        url:'/absensi/store',
-        data:{
-            _token:"{{ csrf_token() }}",
-            image:image,
-            lokasi:lokasi
-        },
-        cache:false,
-        success: function(respond){
-            var status = respond.split("|");
-
-            for (var i = 0; i < status.length; i++) {
-                status[i] = status[i].trim();
+    fetch('/absensi/qr-terbaru')
+        .then(res => res.json())
+        .then(data => {
+            if (data.aktif && data.kode) {
+                kodeQRValid = data.kode.trim();
+                mulaiScanQR();
+            } else {
+                alert("QR tidak aktif atau belum tersedia.");
             }
+        });
 
-            if (status[0] === "success") {
-                if(status[2] === "in") {
-                    notif_masuk.play();
-                } else {
-                    notif_keluar.play();
-                }
+    function mulaiScanQR() {
+        const videoPreview = document.getElementById('preview');
+        if (!videoPreview) {
+            console.error("Elemen #preview tidak ditemukan");
+            return;
+        }
 
-                Swal.fire({
-                    title: 'Berhasil !',
-                    text: status[1],
-                    icon: 'success',
-                });
+        scanner = new Instascan.Scanner({ video: videoPreview, mirror: false });
+
+        scanner.addListener('scan', function (content) {
+            if (content.trim() === kodeQRValid) {
+                alert("QR Valid, silakan lanjut presensi.");
+                scanner.stop();
+                document.getElementById('preview').style.display = "none";
 
                 setTimeout(() => {
-                    location.href = '/dashboard';
-                }, 3000);
+                    $("#presensi").show();
+                    aktifkanWebcam();
+                    getLokasi();
+                }, 1500);
             } else {
-                if(status[2] === "radius") {
-                    radius_sekolah.play();
+                alert("QR tidak valid atau sudah kadaluarsa.");
+            }
+        });
+
+        Instascan.Camera.getCameras().then(function (cameras) {
+            if (cameras.length > 0) {
+                const selected = cameras.length > 1 ? cameras[1] : cameras[0];
+                scanner.start(selected);
+            } else {
+                alert('Kamera tidak ditemukan.');
+            }
+        }).catch(function (e) {
+            console.error(e);
+            alert('Gagal mengakses kamera: ' + e);
+        });
+    }
+
+    function aktifkanWebcam() {
+        Webcam.set({
+            width: window.innerWidth * 0.9,
+            height: window.innerHeight * 0.4,
+            image_format: 'jpeg',
+            jpeg_quality: 80,
+        });
+
+        Webcam.attach('.webcam-camera');
+
+        Webcam.on('error', function(err) {
+            console.error("Webcam.js Error: ", err);
+            alert("Webcam.js Error: " + err.message);
+        });
+    }
+
+    function getLokasi() {
+        if(navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(successCallback, errorCallback, {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            });
+        }
+    }
+
+    function successCallback(posisi) {
+        lokasi.value = posisi.coords.latitude + "," + posisi.coords.longitude;
+        var map = L.map('map').setView([posisi.coords.latitude, posisi.coords.longitude], 18);
+        var lokasi_sekolah = "{{ $lok_sekolah->lokasi_sekolah }}";
+        var lok = lokasi_sekolah.split(",");
+        var lat_sekolah = lok[0];
+        var long_sekolah = lok[1];
+        var radius = "{{ $lok_sekolah->radius }}";
+
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+
+        L.marker([posisi.coords.latitude, posisi.coords.longitude]).addTo(map);
+        L.circle([lat_sekolah, long_sekolah], {
+            color: 'red',
+            fillColor: '#f03',
+            fillOpacity: 0.5,
+            radius: radius
+        }).addTo(map);
+    }
+
+    function errorCallback() {
+        alert("Gagal mendapatkan lokasi.");
+    }
+
+    @if($cek > 0)
+        $("#presensi").show();
+        aktifkanWebcam();
+        getLokasi();
+    @endif
+
+    $("#presensi").click(function(e){
+        Webcam.snap(function(uri){
+            image = uri;
+        });
+
+        var lokasi = $("#lokasi").val();
+
+        $.ajax({
+            type:'POST',
+            url:'/absensi/store',
+            data:{
+                _token:"{{ csrf_token() }}",
+                image:image,
+                lokasi:lokasi
+            },
+            cache:false,
+            success: function(respond){
+                var status = respond.split("|");
+
+                for (var i = 0; i < status.length; i++) {
+                    status[i] = status[i].trim();
                 }
 
-                Swal.fire({
-                    title: 'Error !',
-                    text: status[1],
-                    icon: 'error',
-                });
+                if (status[0] === "success") {
+                    if(status[2] === "in") {
+                        notif_masuk.play();
+                    } else {
+                        notif_keluar.play();
+                    }
+
+                    Swal.fire({
+                        title: 'Berhasil !',
+                        text: status[1],
+                        icon: 'success',
+                    });
+
+                    setTimeout(() => {
+                        location.href = '/dashboard';
+                    }, 3000);
+                } else {
+                    if(status[2] === "radius") {
+                        radius_sekolah.play();
+                    }
+
+                    Swal.fire({
+                        title: 'Error !',
+                        text: status[1],
+                        icon: 'error',
+                    });
+                }
             }
-        }
+        });
     });
-});
-</script>
-@endpush
+    </script>
+    @endpush
