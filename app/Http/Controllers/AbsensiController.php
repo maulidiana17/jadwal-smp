@@ -252,7 +252,6 @@ public function showQrPresensi()
     return view('absensi.qr-admin', compact('kode'));
 }
 
-
 public function getQrTerbaru()
 {
     $now = now();

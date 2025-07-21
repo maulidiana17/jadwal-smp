@@ -144,7 +144,7 @@ function mulaiScanQR() {
     scanner = new Instascan.Scanner({ video: document.getElementById('preview'), mirror: false });
 
     scanner.addListener('scan', function (content) {
-        if (content.trim() === kodeQRValid.trim()) {
+        if (content.trim().toUpperCase() === kodeQRValid.trim().toUpperCase()) {
             alert("QR Valid, silakan lanjut presensi.");
             scanner.stop();
             document.getElementById('preview').style.display = "none";
