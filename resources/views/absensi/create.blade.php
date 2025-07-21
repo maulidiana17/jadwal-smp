@@ -109,10 +109,9 @@ var notif_keluar = document.getElementById('notif_keluar');
 var radius_sekolah = document.getElementById('radius_sekolah');
 var lokasi = document.getElementById('lokasi');
 let scanner;
+let kodeQRValid = '';
 
 $("#presensi").hide();
-
-let kodeQRValid = '';
 
 function ambilQRCode() {
     fetch('/absensi/qr-terbaru?ts=' + new Date().getTime())
@@ -136,21 +135,20 @@ function ambilQRCode() {
         });
 }
 
-
 ambilQRCode();
 setInterval(ambilQRCode, 1800000);
 
-// ✅ Mulai scan QR dengan validasi kode dinamis
+setTimeout(() => {
+    mulaiScanQR();
+}, 1000);
+
 function mulaiScanQR() {
     scanner = new Instascan.Scanner({ video: document.getElementById('preview'), mirror: false });
 
     scanner.addListener('scan', function (content) {
-    console.log("👉 QR Discanned:", content);
-    console.log("✅ QR Valid:", kodeQRValid);
-
-    if (content.trim().toUpperCase() === kodeQRValid.trim().toUpperCase()) {
-        alert("QR Valid, silakan lanjut presensi.");
-         scanner.stop();
+        if (content.trim().toUpperCase() === kodeQRValid.trim().toUpperCase()) {
+            alert("QR Valid, silakan lanjut presensi.");
+            scanner.stop();
             document.getElementById('preview').style.display = "none";
 
             setTimeout(() => {
@@ -158,10 +156,10 @@ function mulaiScanQR() {
                 aktifkanWebcam();
                 getLokasi();
             }, 1500);
-    } else {
-        alert("QR tidak valid atau sudah kadaluarsa.");
-    }
-});
+        } else {
+            alert("QR tidak valid atau sudah kadaluarsa.");
+        }
+    });
 
     Instascan.Camera.getCameras().then(function (cameras) {
         if (cameras.length > 0) {
