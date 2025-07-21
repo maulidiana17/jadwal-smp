@@ -43,12 +43,12 @@
         margin-right: 8px;
     }
 
-    {{--  #preview {
+    #preview {
         width: 80%;
         margin: auto;
         display: block;
         border-radius: 5px;
-    }  --}}
+    }
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
@@ -108,36 +108,32 @@ var notif_masuk = document.getElementById('notif_masuk');
 var notif_keluar = document.getElementById('notif_keluar');
 var radius_sekolah = document.getElementById('radius_sekolah');
 var lokasi = document.getElementById('lokasi');
-{{--
-let scanner;
-let kodeQRValid = '';
+{{--  let scanner;
+let kodeQRValid = '';  --}}
 
-$("#presensi").hide();
+$("#presensi").show();
 
-function ambilQRCode() {
+// ✅ Ambil QR secara berkala tiap 30 menit
+{{--  function ambilQRCode() {
     fetch('/absensi/qr-terbaru?ts=' + new Date().getTime())
         .then(res => res.json())
         .then(data => {
-            if (data.aktif && data.kode) {
-                kodeQRValid = data.kode;
+            kodeQRValid = data.kode;
 
+            // Jika ingin tampilkan QR di halaman:
+            if (document.getElementById("qrCode")) {
                 document.getElementById("qrCode").innerHTML = "";
                 new QRCode(document.getElementById("qrCode"), {
                     text: kodeQRValid,
-                    width: 250,
-                    height: 250,
+                    width: 200,
+                    height: 200,
                 });
-            } else {
-                document.getElementById("qrCode").innerHTML = "<p style='color:red; font-weight:bold;'>QR tidak tersedia. " + (data.pesan ?? "") + "</p>";
             }
-        }).catch(err => {
-            console.error("Gagal mengambil QR:", err);
-            document.getElementById("qrCode").innerHTML = "<p style='color:red;'>Gagal memuat QR</p>";
         });
 }
 
-ambilQRCode();
-setInterval(ambilQRCode, 1800000);
+ambilQRCode(); // Ambil pertama kali
+setInterval(ambilQRCode, 1800000); // Refresh tiap 30 detik
 
 setTimeout(() => {
     mulaiScanQR();
@@ -175,7 +171,6 @@ function mulaiScanQR() {
     });
 }  --}}
 
-// ✅ Aktifkan webcam untuk ambil foto
 function aktifkanWebcam() {
     Webcam.set({
         width: window.innerWidth * 0.9,
