@@ -43,12 +43,12 @@
         margin-right: 8px;
     }
 
-    #preview {
+    {{--  #preview {
         width: 80%;
         margin: auto;
         display: block;
         border-radius: 5px;
-    }
+    }  --}}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
@@ -57,11 +57,11 @@
 @section('content')
 
 <!-- Scan QR Area -->
-<div class="row" style="margin-top: 70px; @if($cek > 0) display:none; @endif">
+{{--  <div class="row" style="margin-top: 70px; @if($cek > 0) display:none; @endif">
     <div class="col-12 text-center">
         <video id="preview"></video>
     </div>
-</div>
+</div>  --}}
 
 <!-- Section Webcam -->
 <div class="row" style="margin-top: 70px;">
@@ -108,6 +108,7 @@ var notif_masuk = document.getElementById('notif_masuk');
 var notif_keluar = document.getElementById('notif_keluar');
 var radius_sekolah = document.getElementById('radius_sekolah');
 var lokasi = document.getElementById('lokasi');
+{{--
 let scanner;
 let kodeQRValid = '';
 
@@ -172,7 +173,7 @@ function mulaiScanQR() {
         console.error(e);
         alert('Tidak bisa mengakses kamera: ' + e);
     });
-}
+}  --}}
 
 // ✅ Aktifkan webcam untuk ambil foto
 function aktifkanWebcam() {
