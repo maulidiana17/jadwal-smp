@@ -84,6 +84,7 @@ pm.max_spare_servers = 32
 pm.start_servers = 18
 clear_env = no
 catch_workers_output = yes
+php_admin_value[date.timezone] = Asia/Jakarta
 '''
 "scripts/config/template.mjs" = '''
 import { readFile, writeFile } from "fs/promises";
