@@ -16,9 +16,6 @@
                             <p class="mt-2">QR ini akan berubah setiap 30 detik</p>
                         </div>
 
-                        {{--  <button class="btn btn-primary d-print-none" onclick="window.print()">
-                            <i class="fas fa-print"></i> Cetak QR
-                        </button>  --}}
                     </div>
                 </div>
             </div>
@@ -56,7 +53,7 @@
 let kodeQRValid = '';
 
 function ambilQRCode() {
-    fetch('/absensi/qr-terbaru')
+   fetch('/absensi/qr-terbaru?ts=' + new Date().getTime())
         .then(res => res.json())
         .then(data => {
             if (data.aktif && data.kode) {
@@ -79,7 +76,7 @@ function ambilQRCode() {
 
 
 ambilQRCode();
-setInterval(ambilQRCode, 30000);
+setInterval(ambilQRCode, 1800000);
 </script>
 
 

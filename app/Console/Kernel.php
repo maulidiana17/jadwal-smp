@@ -18,8 +18,8 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->hourly();
           $schedule->command('qr:generate-daily')
-                 ->everyThirtyMinutes()
-                 ->between('5:00', '8:00');
+                 ->everyThirtyMinutes();
+                //  ->between('5:00', '8:00');
     }
 
     /**

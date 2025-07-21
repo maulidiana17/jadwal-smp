@@ -31,7 +31,7 @@ class GenerateDailyQR extends Command
     $now = Carbon::now();
 
     // Cek apakah dalam rentang waktu 05:00 - 08:00
-    if ($now->between(Carbon::today()->setTime(5, 0), Carbon::today()->setTime(8, 0))) {
+    // if ($now->between(Carbon::today()->setTime(5, 0), Carbon::today()->setTime(8, 0))) {
 
         // Cari QR Code yang masih aktif hari ini
         $qrAktif = QRValidasi::where('tanggal', $now->toDateString())
@@ -55,9 +55,9 @@ class GenerateDailyQR extends Command
 
         $this->info('QR Code baru berhasil dibuat pada: ' . $now->toDateTimeString());
 
-    } else {
-        $this->info('Di luar jadwal pembuatan QR (05:00 - 08:00)');
-    }
+    // } else {
+    //     $this->info('Di luar jadwal pembuatan QR (05:00 - 08:00)');
+    // }
 }
 
 }

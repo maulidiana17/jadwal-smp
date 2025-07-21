@@ -113,9 +113,9 @@ let kodeQRValid = '';
 
 $("#presensi").hide();
 
-// ✅ Ambil QR secara berkala tiap 30 detik
+// ✅ Ambil QR secara berkala tiap 30 menit
 function ambilQRCode() {
-    fetch('/absensi/qr-terbaru')
+    fetch('/absensi/qr-terbaru?ts=' + new Date().getTime())
         .then(res => res.json())
         .then(data => {
             kodeQRValid = data.kode;
@@ -133,7 +133,7 @@ function ambilQRCode() {
 }
 
 ambilQRCode(); // Ambil pertama kali
-setInterval(ambilQRCode, 30000); // Refresh tiap 30 detik
+setInterval(ambilQRCode, 1800000); // Refresh tiap 30 detik
 
 setTimeout(() => {
     mulaiScanQR();
