@@ -16,6 +16,7 @@
 <style>
     .webcam-camera,
     .webcam-camera video {
+        margin-top: 70px;
         display: block;
         width: 80% !important;
         margin: auto;
@@ -57,6 +58,7 @@
 
     .webcam-camera,
     #presensi {
+        margin-top: 70px;
         display: none;
     }
 </style>
