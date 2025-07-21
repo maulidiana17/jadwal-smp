@@ -68,7 +68,7 @@
 @section('content')
 
 <!-- Section QR Code Scanner -->
-<div class="row mt-2" id="section-scanner">
+<div class="row mt-2" id="section-scanner" style="margin-top: 70px;">
     <div class="col-12 text-center">
         <video id="preview"></video>
         <div id="reader"></div>
@@ -139,11 +139,11 @@
     scanner.addListener('scan', function (content) {
         document.getElementById("reader").innerHTML = `
         <div class='alert alert-success text-center' style="margin-top: 60px;">
-            QR Valid: ${content}
+            QR Valid: Silahkan lanjutkan presensi!
         </div>`;
 
         document.getElementById("preview").style.display = "none";
-
+        document.getElementById("reader").style.display = "none";
         scanner.stop(); // stop QR scanner segera
 
         // Tunda 1.5 detik lalu tampilkan webcam dan aktifkan lokasi
