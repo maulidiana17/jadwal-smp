@@ -109,45 +109,48 @@ var notif_keluar = document.getElementById('notif_keluar');
 var radius_sekolah = document.getElementById('radius_sekolah');
 var lokasi = document.getElementById('lokasi');
 let scanner;
-let kodeQRValid = '';
 
 $("#presensi").hide();
 
-// ✅ Ambil QR secara berkala tiap 30 menit
+let kodeQRValid = '';
+
 function ambilQRCode() {
     fetch('/absensi/qr-terbaru?ts=' + new Date().getTime())
         .then(res => res.json())
         .then(data => {
-            if (!data || !data.kode) return;
-            kodeQRValid = data.kode;
+            if (data.aktif && data.kode) {
+                kodeQRValid = data.kode;
 
-            // Jika ingin tampilkan QR di halaman:
-            if (document.getElementById("qrCode")) {
                 document.getElementById("qrCode").innerHTML = "";
                 new QRCode(document.getElementById("qrCode"), {
                     text: kodeQRValid,
-                    width: 200,
-                    height: 200,
+                    width: 250,
+                    height: 250,
                 });
+            } else {
+                document.getElementById("qrCode").innerHTML = "<p style='color:red; font-weight:bold;'>QR tidak tersedia. " + (data.pesan ?? "") + "</p>";
             }
+        }).catch(err => {
+            console.error("Gagal mengambil QR:", err);
+            document.getElementById("qrCode").innerHTML = "<p style='color:red;'>Gagal memuat QR</p>";
         });
 }
 
-ambilQRCode(); // Ambil pertama kali
-setInterval(ambilQRCode, 1800000); // Refresh tiap 30 detik
 
-setTimeout(() => {
-    mulaiScanQR();
-}, 1000);
+ambilQRCode();
+setInterval(ambilQRCode, 1800000);
 
 // ✅ Mulai scan QR dengan validasi kode dinamis
 function mulaiScanQR() {
     scanner = new Instascan.Scanner({ video: document.getElementById('preview'), mirror: false });
 
     scanner.addListener('scan', function (content) {
-        if (content.trim().toUpperCase() === kodeQRValid.trim().toUpperCase()) {
-            alert("QR Valid, silakan lanjut presensi.");
-            scanner.stop();
+    console.log("👉 QR Discanned:", content);
+    console.log("✅ QR Valid:", kodeQRValid);
+
+    if (content.trim().toUpperCase() === kodeQRValid.trim().toUpperCase()) {
+        alert("QR Valid, silakan lanjut presensi.");
+         scanner.stop();
             document.getElementById('preview').style.display = "none";
 
             setTimeout(() => {
@@ -155,10 +158,10 @@ function mulaiScanQR() {
                 aktifkanWebcam();
                 getLokasi();
             }, 1500);
-        } else {
-            alert("QR tidak valid atau sudah kadaluarsa.");
-        }
-    });
+    } else {
+        alert("QR tidak valid atau sudah kadaluarsa.");
+    }
+});
 
     Instascan.Camera.getCameras().then(function (cameras) {
         if (cameras.length > 0) {
