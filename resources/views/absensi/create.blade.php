@@ -44,10 +44,11 @@
         margin-right: 8px;
     }
 
-    video#preview {
-        object-fit: cover;
-        width: 100%;
-        height: auto;
+      #preview {
+        width: 80%;
+        margin: auto;
+        display: block;
+        border-radius: 5px;
     }
 </style>
 
@@ -62,7 +63,7 @@
 <div class="row mt-2" id="section-scanner">
     <div class="col-12 text-center">
         <video id="preview" style="width: 100%; border-radius: 5px;" playsinline></video>
-        <div id="reader"></div> {{-- Ditambahkan agar tidak error saat innerHTML digunakan --}}
+        <div id="reader"></div> Ditambahkan agar tidak error saat innerHTML digunakan
     </div>
 </div>
 
