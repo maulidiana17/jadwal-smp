@@ -13,7 +13,7 @@ class AdminController extends Controller
     public function index(Request $request)
     {
         // $query = User::where('role', 'admin');
-                $admins = User::role('admin')->get();
+            $admins = User::role('admin')->get();
 
         // $admins = $query->paginate(10);
 
@@ -28,12 +28,12 @@ class AdminController extends Controller
             'password' => 'required|string|min:6'
         ]);
 
-        User::create([
+        $user = User::create([
             'name'     => $request->name,
             'email'    => $request->email,
             'password' => Hash::make($request->password),
-            'role'     => 'admin'
         ]);
+        $user->assignRole('admin');
 
         return redirect()->route('admin.index')->with('success', 'Admin berhasil ditambahkan.');
     }
@@ -75,7 +75,6 @@ class AdminController extends Controller
      public function kelas()
     {
         $kelas = DB::table('kelas')
-            // ->table('kelas')
             ->orderBy('nama')
             ->get();
 
