@@ -127,9 +127,85 @@
     var notif_keluar = document.getElementById('notif_keluar');
     var radius_sekolah = document.getElementById('radius_sekolah');
     let image = '';
+    var sudahPresensiMasuk = {{ $cek > 0 ? 'true' : 'false' }};
+
+    document.addEventListener("DOMContentLoaded", function () {
+            if (sudahPresensiMasuk) {
+                // Langsung tampil webcam dan tombol presensi pulang
+                document.getElementById("preview").style.display = "none";
+                document.getElementById("reader").style.display = "none";
+                document.querySelector(".webcam-camera").style.display = "block";
+                document.getElementById("presensi").style.display = "block";
+
+                Webcam.set({
+                    width: window.innerWidth * 0.9,
+                    height: window.innerHeight * 0.4,
+                    image_format: 'jpeg',
+                    jpeg_quality: 80,
+                });
+                Webcam.attach('.webcam-camera');
+
+                Webcam.on('error', function (err) {
+                    console.error("Webcam.js Error: ", err);
+                    alert("Webcam.js Error: " + err.message);
+                });
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(successCallback, errorCallback);
+                }
+            } else {
+                document.querySelector(".webcam-camera").style.display = "none";
+                document.getElementById("presensi").style.display = "none";
+
+                let scanner = new Instascan.Scanner({
+                    video: document.getElementById('preview'),
+                    mirror: false
+                });
+
+                scanner.addListener('scan', function (content) {
+                    document.getElementById("reader").innerHTML = `
+                    <div class='alert alert-success text-center' style="margin-top: 60px;">
+                        QR Valid: Silahkan lanjutkan presensi kamera!
+                    </div>`;
+
+                    document.getElementById("preview").style.display = "none";
+                    document.getElementById("reader").style.display = "none";
+                    scanner.stop();
+
+                    setTimeout(() => {
+                        document.querySelector(".webcam-camera").style.display = "block";
+                        document.getElementById("presensi").style.display = "block";
+
+                        Webcam.set({
+                            width: window.innerWidth * 0.9,
+                            height: window.innerHeight * 0.4,
+                            image_format: 'jpeg',
+                            jpeg_quality: 80,
+                        });
+                        Webcam.attach('.webcam-camera');
+
+                        if (navigator.geolocation) {
+                            navigator.geolocation.getCurrentPosition(successCallback, errorCallback);
+                        }
+                    }, 1500);
+                });
+
+                Instascan.Camera.getCameras().then(function (cameras) {
+                    if (cameras.length > 0) {
+                        let backCam = cameras.find(cam => cam.name.toLowerCase().includes('back')) || cameras[0];
+                        scanner.start(backCam);
+                    } else {
+                        alert('Tidak ada kamera ditemukan. Pastikan izin kamera aktif.');
+                    }
+                }).catch(function (e) {
+                    console.error(e);
+                    alert('Gagal mengakses kamera: ' + e);
+                });
+            }
+        });
+
 
     // Sembunyikan elemen saat awal
-    document.addEventListener("DOMContentLoaded", function () {
+    {{--  document.addEventListener("DOMContentLoaded", function () {
         document.querySelector(".webcam-camera").style.display = "none";
         document.getElementById("presensi").style.display = "none";
     });
@@ -185,7 +261,7 @@
     }).catch(function (e) {
         console.error(e);
         alert('Gagal mengakses kamera: ' + e);
-    });
+    });  --}}
 
     function successCallback(posisi) {
         document.getElementById('lokasi').value = posisi.coords.latitude + "," + posisi.coords.longitude;
