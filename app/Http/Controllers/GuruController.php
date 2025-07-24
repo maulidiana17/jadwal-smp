@@ -166,7 +166,8 @@ class GuruController extends Controller
             ->join('kelas', 'jadwal.kelas_id', '=', 'kelas.id')
             ->join('waktu', 'jadwal.waktu_id', '=', 'waktu.id')
             ->where('jadwal.guru_id', $guru->id)
-            ->whereRaw('LOWER(waktu.hari) = ?', [strtolower($hariIndo)])
+            ->whereRaw("LOWER(waktu.hari) REGEXP ?", [$hariIndo])
+            // ->whereRaw('LOWER(waktu.hari) = ?', [strtolower($hariIndo)])
             ->select('kelas.nama as nama_kelas', 'kelas.id as kelas_id')
             ->get();
         $daftarSiswaKelasHariIni = collect();
@@ -184,7 +185,8 @@ class GuruController extends Controller
             ->join('kelas', 'jadwal.kelas_id', '=', 'kelas.id')
             ->join('waktu', 'jadwal.waktu_id', '=', 'waktu.id')
             ->where('jadwal.guru_id', $guru->id)
-            ->whereRaw('LOWER(waktu.hari) = ?', [strtolower($hariIndo)])
+            ->whereRaw("LOWER(waktu.hari) REGEXP ?", [$hariIndo])
+            // ->whereRaw('LOWER(waktu.hari) = ?', [strtolower($hariIndo)])
             ->select('kelas.nama as nama_kelas', 'mapel.mapel')
             ->get();
 
@@ -311,7 +313,7 @@ class GuruController extends Controller
     }
 
     //benar fiks
-    public function qrindex()
+    public function qrIndex()
     {
         $hariini = Carbon::today()->toDateString();
         $user = Auth::user();
@@ -390,7 +392,8 @@ class GuruController extends Controller
             ->join('kelas', 'jadwal.kelas_id', '=', 'kelas.id')
             ->join('waktu', 'jadwal.waktu_id', '=', 'waktu.id')
             ->where('jadwal.guru_id', $guru->id)
-            ->whereRaw('LOWER(waktu.hari) = ?', [strtolower($hariIndo)])
+            ->whereRaw("LOWER(waktu.hari) REGEXP ?", [$hariIndo])
+            // ->whereRaw('LOWER(waktu.hari) = ?', [strtolower($hariIndo)])
             ->select('kelas.nama as nama_kelas', 'kelas.id as kelas_id')
             ->get();
         $daftarSiswaKelasHariIni = collect();
@@ -408,7 +411,8 @@ class GuruController extends Controller
             ->join('kelas', 'jadwal.kelas_id', '=', 'kelas.id')
             ->join('waktu', 'jadwal.waktu_id', '=', 'waktu.id')
             ->where('jadwal.guru_id', $guru->id)
-            ->whereRaw('LOWER(waktu.hari) = ?', [strtolower($hariIndo)])
+            ->whereRaw("LOWER(waktu.hari) REGEXP ?", [$hariIndo])
+            // ->whereRaw('LOWER(waktu.hari) = ?', [strtolower($hariIndo)])
             ->select('kelas.nama as nama_kelas')
             ->get();
 
@@ -479,7 +483,7 @@ class GuruController extends Controller
         }
 
         $user = Auth::user();
-        $guru = Guru::where('id', $guru->id)->first();
+        $guru = Guru::where('email', Auth::user()->email)->first();
         if (!$guru) {
             return back()->with('error', 'Guru tidak ditemukan.');
         }
