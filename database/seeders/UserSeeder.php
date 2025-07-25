@@ -15,7 +15,7 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        $user = User::create(
+        $user = User::updateOrCreate(
             [
                 'email' => 'dini123@gmail.com',
                 'name'      => 'admin',
@@ -26,7 +26,8 @@ class UserSeeder extends Seeder
         );
 
         $user->assignRole('admin');
-        $kurikulum = User::create(
+
+        $kurikulum = User::updateOrCreate(
             [
                 'email' => 'kurikulum@gmail.com',
                 'name'      => 'kurikulum',
@@ -37,7 +38,8 @@ class UserSeeder extends Seeder
         );
 
         $kurikulum->assignRole('kurikulum');
-        $guru= User::create(
+
+         $guru = User::updateOrCreate(
             [
                 'email' => 'spensa@gmail.com',
                 'name'      => 'guru',
@@ -50,7 +52,7 @@ class UserSeeder extends Seeder
         $guru->assignRole('guru');
 
 
-            $siswa = Siswa::create(
+             Siswa::updateOrCreate(
             [
                 'nis' => '1234567890',
                 'nama_lengkap'      => 'siswa',
