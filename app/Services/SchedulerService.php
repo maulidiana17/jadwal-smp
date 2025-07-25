@@ -20,21 +20,28 @@ class SchedulerService
     public function generate(array $params): array
     {
         set_time_limit(1800);
-
-        $pengampus = Pengampu::with(['guru','mapel','kelas'])->get();
+    
+        // Ambil semua pengampu dan susun kebutuhan jadwal
+        $pengampus = Pengampu::with(['guru', 'mapel', 'kelas'])->get();
         $requirements = [];
+    
         foreach ($pengampus as $p) {
             $requirements[] = [
-                'kelas_id'        => $p->kelas_id,
-                'mapel_id'        => $p->mapel_id,
-                'guru_options'    => [$p->guru_id],
-                'requires_ruang'  => $p->mapel->ruang_khusus ? strtolower($p->mapel->ruang_khusus) : null,
+                'kelas_id'       => $p->kelas_id,
+                'mapel_id'       => $p->mapel_id,
+                'guru_options'   => [$p->guru_id],
+                'requires_ruang' => $p->mapel->ruang_khusus ? strtolower($p->mapel->ruang_khusus) : null,
             ];
         }
-
+    
+        // Ambil semua ruangan dan waktu pelajaran (non-istirahat, hanya 'pelajaran')
         $ruangans = Ruangan::all();
-        $waktus = Waktu::where('ket', 'not like', '%istirahat%')->get();
-
+        $waktus = Waktu::whereRaw('LOWER(ket) = ?', ['pelajaran'])->get();
+    
+        // Ambil jam pelajaran per minggu dari mapel
+        $mapelJamPerMinggu = DB::table('mapel')->pluck('jam_per_minggu', 'id')->toArray();
+    
+        // Jalankan GeneticScheduler
         $scheduler = new GeneticScheduler(
             $requirements,
             $ruangans,
@@ -42,22 +49,28 @@ class SchedulerService
             $params['popSize'],
             $params['crossRate'],
             $params['mutRate'],
-            $params['generations']
+            $params['generations'],
+            $mapelJamPerMinggu
         );
-
+    
+        // Inisialisasi hasil terbaik
         $bestSchedule = [];
         $bestConflicts = [];
         $bestSkipped = PHP_INT_MAX;
-
+        $bestFitness = -INF;
+    
         $tries = $params['tries'] ?? 3;
+    
         for ($i = 0; $i < $tries; $i++) {
             $result = $scheduler->run();
             $schedule = $result['jadwal'];
             $fitness = $result['fitness'];
-
-        \Log::info('Hasil generate jumlah jadwal: ' . count($schedule));
-
+    
+            \Log::info("Hasil generate [try-$i]: Jumlah jadwal: " . count($schedule) . " | Fitness: $fitness");
+    
+            // Cek konflik terhadap jadwal yang sudah ada di DB (bisa juga dikosongkan dulu)
             $conflicts = [];
+    
             foreach ($schedule as $jadwal) {
                 $exists = Jadwal::where('waktu_id', $jadwal['waktu_id'])
                     ->where(function ($q) use ($jadwal) {
@@ -66,30 +79,31 @@ class SchedulerService
                           ->orWhere('ruangan_id', $jadwal['ruangan_id']);
                     })
                     ->exists();
-
+    
                 if ($exists) {
                     $conflicts[] = $jadwal;
                 }
             }
-            
+    
             $skipped = count($conflicts);
-
-            // Logging progress tries
-            \Log::info("Tries ke-$i: Conflicts=$skipped, Fitness=$fitness");
-            
-            if ($skipped < $bestSkipped|| ($skipped == $bestSkipped && $fitness > $bestFitness)) {
+    
+            \Log::info("Try-$i: Conflicts=$skipped | Fitness=$fitness");
+    
+            // Update jika solusi lebih baik
+            if ($skipped < $bestSkipped || ($skipped === $bestSkipped && $fitness > $bestFitness)) {
                 $bestSkipped = $skipped;
                 $bestFitness = $fitness;
                 $bestSchedule = $schedule;
                 $bestConflicts = $conflicts;
-                
             }
-
+    
+            // Jika sudah 0 konflik, langsung hentikan
             if ($bestSkipped === 0) break;
         }
-
+    
         return [$bestSchedule, $bestConflicts, $bestSkipped, $bestFitness];
     }
+
 
     /**
      * Save the generated schedule to database.
