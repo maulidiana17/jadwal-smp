@@ -18,24 +18,20 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class GuruController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(['role:admin|kurikulum']);
-    }
 
    public function index()
-{
-    $gurus = Guru::orderBy('nama')->paginate(5);
+    {
+        $gurus = Guru::orderBy('nama')->paginate(5);
 
-    switch (true) {
-        case auth()->user()->hasRole('admin'):
-            return view('layouts.admin.guru.index', compact('gurus'));
-        case auth()->user()->hasRole('kurikulum'):
-            return view('guru.index', compact('gurus'));
-        default:
-            abort(403, 'Tidak diizinkan.');
+        switch (true) {
+            case auth()->user()->hasRole('admin'):
+                return view('layouts.admin.guru.index', compact('gurus'));
+            case auth()->user()->hasRole('kurikulum'):
+                return view('guru.index', compact('gurus'));
+            default:
+                abort(403, 'Tidak diizinkan.');
+        }
     }
-}
 
 
     public function create()
