@@ -18,6 +18,11 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class GuruController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(['role:admin|kurikulum']);
+    }
+
     public function index()
     {
         $gurus = Guru::orderBy('nama')->paginate(5);

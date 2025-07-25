@@ -224,7 +224,7 @@ Route::post('/konfigurasi/updatelokasisekolah', [KonfigurasiController::class, '
 
 });
 
-Route::middleware(['auth', 'guru'])->group(function () {
+Route::middleware(['auth', 'role:admin|kurikulum'])->group(function () {
     Route::get('/dashboardguru', [DashboardController::class, 'dashboardguru']);
     Route::get('/qr', [GuruController::class, 'qr']);
     Route::get('/dashboardguruqr', [GuruController::class, 'qrIndex']);
