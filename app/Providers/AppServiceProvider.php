@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Request;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,8 +25,11 @@ class AppServiceProvider extends ServiceProvider
     {
 
         if (app()->isProduction()) {
-            URL::forceRootUrl(config('app.url'));
-            URL::forceScheme('https');
+        URL::forceRootUrl(config('app.url'));
+        URL::forceScheme('https');
+
+        // Fix untuk pagination URL di deploy server seperti Coolify
+        request()->server->set('HTTPS', 'on');
         }
 
         // Set default timezone
