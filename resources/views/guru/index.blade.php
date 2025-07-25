@@ -7,7 +7,7 @@
                 <div class="card-body">
                   <h4 class="card-title">Data Guru</h4>
                   <div class="d-flex justify-content-between mb-3 align-items-center">
-                    @hasanyrole('admin|kurikulum')
+                    @hasanyrole('kurikulum')
                         <a href="{{route('guru.create')}}" class="btn btn-info">Tambah</a>
                         <a class="mdi mdi-file-excel text-success" data-toggle="modal" data-target="#importModal">Impor Excel</a>
                     @endhasanyrole
@@ -19,7 +19,7 @@
                   </div>
 
                   <!-- Modal -->
-                  @hasanyrole('admin|kurikulum')
+                  @hasanyrole('kurikulum')
                     <!-- Modal Import -->
                     <div class="modal fade" id="importModal" tabindex="-1" role="dialog"
                         aria-labelledby="importModalLabel" aria-hidden="true">
@@ -110,7 +110,7 @@
                           <td>{{ $g->email }}</td>
                           <td>{{ $g->alamat }}</td>
                           <td>
-                            @hasanyrole('admin|kurikulum')
+                            @hasanyrole('kurikulum')
                                 <a href="{{route('guru.edit',['id'=>$g->id])}}" class="ti-pencil text-info"></a>
                                 <a href="" class="ti-trash text-danger" data-toggle="modal" data-target="#modal-hapus{{ $g->id }}"></a>
                             @endhasanyrole
@@ -123,32 +123,32 @@
                         </tr>
 
                         <!-- Modal -->
-                        @hasanyrole('admin|kurikulum')
-<!-- Modal -->
-<div class="modal fade" id="modal-hapus{{ $g->id }}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">Konfirmasi Hapus Data</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-       <div class="modal-body">
-         <p>Apakah anda yakin menghapus data <b>{{$g->nama}}</b></p>
-       </div>
-      <div class="modal-footer">
-        <form action="{{route('guru.delete',$g->id)}}" method="POST">
-          @csrf
-          @method('DELETE')
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
-        <button type="submit" class="btn btn-danger">Hapus</button>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-@endhasanyrole
+                        @hasanyrole('kurikulum')
+                        <!-- Modal -->
+                        <div class="modal fade" id="modal-hapus{{ $g->id }}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalLabel">Konfirmasi Hapus Data</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
+                                <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Apakah anda yakin menghapus data <b>{{$g->nama}}</b></p>
+                            </div>
+                            <div class="modal-footer">
+                                <form action="{{route('guru.delete',$g->id)}}" method="POST">
+                                @csrf
+                                @method('DELETE')
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                                <button type="submit" class="btn btn-danger">Hapus</button>
+                                </form>
+                            </div>
+                            </div>
+                        </div>
+                        </div>
+                        @endhasanyrole
 
                         {{--  <div class="modal fade" id="modal-hapus{{ $g->id }}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
                           <div class="modal-dialog" role="document">
