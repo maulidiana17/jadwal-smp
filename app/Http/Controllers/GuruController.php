@@ -89,13 +89,12 @@ class GuruController extends Controller
     {
         $hariini = Carbon::today()->toDateString();
 
-        if (!Auth::user()->hasRole('guru')) {
-    abort(403, 'Akses ditolak.');
-    }
-
 
         $user = Auth::user();
-     $guru = Guru::where('email', Auth::user()->email)->first();
+         if (!Auth::user()->hasRole('guru')) {
+            abort(403, 'Akses ditolak.');
+        }
+        $guru = Guru::where('email', Auth::user()->email)->first();
 
 
         if (!$guru) {
@@ -270,7 +269,7 @@ class GuruController extends Controller
         $akhir = Carbon::parse($request->tanggal_akhir)->endOfDay();
 
         $user = Auth::user();
-        $guru = Guru::where('id', $guru->id)->firstOrFail();
+        $guru = Guru::where('email', $user->email)->firstOrFail();
 
         $kelasDiajar = DB::table('jadwal')
             ->join('kelas', 'jadwal.kelas_id', '=', 'kelas.id')
@@ -288,7 +287,7 @@ class GuruController extends Controller
     public function downloadQr()
     {
         $user = Auth::user();
-        $guru = Guru::where('id', $guru->id)->first();
+        $guru = Guru::where('email', $user->email)->firstOrFail();
 
         if (!$guru) {
             abort(404, 'Data guru tidak ditemukan.');
@@ -342,7 +341,7 @@ class GuruController extends Controller
 
         $jumlahterlambat = DB::table('absensi')
             ->where('tgl_absen', $hariini)
-            ->where('jam_masuk', '>', '07:45')
+            ->where('jam_masuk', '>', '10:00')
             ->count();
 
         $siswaIzin = DB::table('pengajuan_izin')

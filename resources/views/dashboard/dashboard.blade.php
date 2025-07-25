@@ -155,8 +155,64 @@
 
 
 </div>
-<!-- Jadwal Hari Ini -->
+<!-- Rekap Presensi -->
 <div class="container mb-5">
+    <div class="tab-pane fade show active" id="pilled" role="tabpanel">
+        <ul class="nav nav-tabs style1 mb-3" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" data-toggle="tab" href="#home" role="tab">
+                    Jadwal Mata Pelajaran Hari Ini
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    @if(count($jadwalHariIni))
+        <div class="row">
+            @foreach($jadwalHariIni as $jadwal)
+            <div class="col-12 mb-3">
+                <div class="card shadow-sm p-3 {{ $jadwalSedangBerlangsung && $jadwalSedangBerlangsung->jam_mulai == $jadwal->jam_mulai ? 'border-warning bg-warning-subtle' : 'bg-light' }}">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <!-- Nama Mapel dan Guru -->
+                            <div class="col-md-6 col-sm-12 mb-2 mb-md-0">
+                                <h6 class="mb-1">{{ $jadwal->mapel }}</h6>
+                                <p class="mb-0 small text-muted">Guru: {{ $jadwal->nama_guru }}</p>
+                            </div>
+
+                            <!-- Jam -->
+                            <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
+                                <p class="mb-0 small text-muted">Jam: {{ $jadwal->jam_mulai }} - {{ $jadwal->jam_selesai }}</p>
+                            </div>
+
+                            <!-- Tombol dan Status -->
+                            <div class="col-md-3 col-sm-6 text-md-end text-sm-start">
+                                <a href="/absensi/scan" class="btn btn-sm btn-danger mb-2">
+                                    <ion-icon name="qr-code-outline"></ion-icon> Scan QR
+                                </a><br>
+                                <small>Status:
+                                    <span class="badge badge-success status-absen-badge"
+                                          data-jadwal="{{ $jadwal->jam_mulai }}"
+                                          data-mapel="{{ $jadwal->mapel }}">
+                                          Loading...
+                                    </span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endforeach
+        </div>
+    @else
+        <div class="alert rounded text-center" style="background-color: #ffcf30fa; color: #000;">
+            Tidak ada jadwal tersedia saat ini.
+        </div>
+    @endif
+</div>
+
+
+{{--  <div class="container mb-5">
        <div class="tab-pane fade show active" id="pilled" role="tabpanel">
             <ul class="nav nav-tabs style1" role="tablist">
                 <li class="nav-item">
@@ -184,13 +240,12 @@
         </div>
         @endforeach
     @else
-        {{--  <div class="alert alert-warning">Tidak ada jadwal tersedia saat ini.</div>  --}}
-        <div class="alert rounded" style="background-color: #ffcf30fa; color: #000;">
+          <div class="alert rounded" style="background-color: #ffcf30fa; color: #000;">
             Tidak ada jadwal tersedia saat ini.
         </div>
 
     @endif
-</div>
+</div>  --}}
 
 <!-- Histori Presensi Bulan Ini -->
 <div class="container mb-5" style="padding-bottom: 80px;">
@@ -209,7 +264,7 @@
         <div>
             <strong>{{ date("d M Y", strtotime($d->tgl_absen)) }}</strong><br>
             <small class="text-muted">Masuk: {{ $d->jam_masuk }}</small><br>
-            @if($d->jam_masuk > '07:45')
+            @if($d->jam_masuk > '10:00')
                 <span class="badge bg-danger">Terlambat</span><br>
             @endif
             <small class="text-muted">Pulang: {{ $d->jam_keluar ?? 'Belum Absen' }}</small>

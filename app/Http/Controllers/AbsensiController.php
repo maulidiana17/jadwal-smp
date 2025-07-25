@@ -104,7 +104,7 @@ class AbsensiController extends Controller
                     echo "success|Selamat, kamu sudah berhasil melakukan absensi!|in";
                     Storage::put($file, $image_base64);
 
-                $jamBatas = '07:45:00';
+                $jamBatas = '10:00:00';
 
                 if ($jam <= $jamBatas) {
                     $pesan = "INFO PRESENSI SMPN 1 GENTENG:\nAnanda {$siswa->nama_lengkap} kelas {$siswa->kelas} telah melakukan absensi masuk pada pukul {$jam}.";
@@ -688,7 +688,7 @@ public function updateizin(Request $request)
                     return "MAX(IF(DAY(tgl_absen) = $day, CONCAT(jam_masuk, '-', IFNULL(jam_keluar, '00:00:00')), '')) AS tgl_$day";
                 })->implode(', ') . ',
                 SUM(CASE WHEN jam_masuk IS NOT NULL THEN 1 ELSE 0 END) AS jumlah_hadir,
-                SUM(CASE WHEN jam_masuk > "07:45:00" THEN 1 ELSE 0 END) AS jumlah_terlambat'
+                SUM(CASE WHEN jam_masuk > "10:00:00" THEN 1 ELSE 0 END) AS jumlah_terlambat'
             )
             ->join('siswa', 'absensi.nis', '=', 'siswa.nis')
             ->whereMonth('tgl_absen', $bulan)

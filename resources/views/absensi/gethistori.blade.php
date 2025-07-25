@@ -46,7 +46,7 @@
         @foreach($histori as $d)
             @php
                 $path = Storage::url('uploads/presensi/' . $d->foto_masuk);
-                $isTerlambat = $d->jam_masuk >= "07:45";
+                $isTerlambat = $d->jam_masuk >= "10:00";
 
                 // Konversi hari dan bulan ke Bahasa Indonesia
                 $hariList = [

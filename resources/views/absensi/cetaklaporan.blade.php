@@ -93,8 +93,8 @@
             </td>
             <td style="border: 1px solid #000; padding: 6px;">
                 @if($data['status'] == 'absen')
-                    @if($data['jam_masuk'] > '07:45:00')
-                        Terlambat {{ selisih('07:45:00', $data['jam_masuk']) }}
+                    @if($data['jam_masuk'] > '10:00:00')
+                        Terlambat {{ selisih('10:00:00', $data['jam_masuk']) }}
                     @else
                         Tepat Waktu
                     @endif
