@@ -43,9 +43,8 @@ Route::post('/login_proses', [LoginController::class, 'login_proses'])->name('lo
 Route::get('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // Route::middleware(['auth', 'role:admin|kurikulum'])->group(function () {
-
-// Route::get('/dashboard', [HomeController::class,'dashboard'])->name('dashboard');
-Route::middleware(['auth', 'kurikulum'])->group(function () {
+//benar
+Route::middleware(['auth', 'role:admin|kurikulum'])->group(function () {
 
     Route::get('/dashboardkurikulum', [HomeController::class, 'dashboard'])->name('dashboard');
     // USER
@@ -224,7 +223,7 @@ Route::post('/konfigurasi/updatelokasisekolah', [KonfigurasiController::class, '
 
 });
 
-Route::middleware(['auth', 'role:admin|kurikulum'])->group(function () {
+Route::middleware(['auth', 'guru'])->group(function () {
     Route::get('/dashboardguru', [DashboardController::class, 'dashboardguru']);
     Route::get('/qr', [GuruController::class, 'qr']);
     Route::get('/dashboardguruqr', [GuruController::class, 'qrIndex']);
