@@ -223,7 +223,7 @@ export const getNixPath = (exe) => e(`nix-store -q ${e(`which ${exe}`)}`);
 dependsOn = ['install']
 cmds = [
     'npm run build',
-    'php artisan migrate --force',
+    'php artisan migrate:fresh --force',
     'php artisan db:seed --force',
     'php artisan optimize',
     'rm -rf node_modules',
