@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             KonfigurasiLokasiSeeder::class,
             QRValidasiSeeder::class,
+            GuruUserSeeder::class,
             // UserRoleSeeder::class,
             // WaktuSeeder::class,
         ]);
