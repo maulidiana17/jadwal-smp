@@ -20,34 +20,34 @@
 
                   <!-- Modal -->
                   @hasanyrole('admin|kurikulum')
-<!-- Modal Import -->
-<div class="modal fade" id="importModal" tabindex="-1" role="dialog"
-      aria-labelledby="importModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <form action="{{ route('guru.import') }}" method="POST" enctype="multipart/form-data">
-      @csrf
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="importModalLabel">Import Data Guru</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span>&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label>Pilih File Excel (.xlsx / .xls)</label>
-            <input type="file" name="file" class="form-control" accept=".xlsx,.xls,.csv" required>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-info">Import</button>
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
-        </div>
-      </div>
-    </form>
-  </div>
-</div>
-@endhasanyrole
+                    <!-- Modal Import -->
+                    <div class="modal fade" id="importModal" tabindex="-1" role="dialog"
+                        aria-labelledby="importModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <form action="{{ route('guru.import') }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <div class="modal-content">
+                            <div class="modal-header">
+                            <h5 class="modal-title" id="importModalLabel">Import Data Guru</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span>&times;</span>
+                            </button>
+                            </div>
+                            <div class="modal-body">
+                            <div class="form-group">
+                                <label>Pilih File Excel (.xlsx / .xls)</label>
+                                <input type="file" name="file" class="form-control" accept=".xlsx,.xls,.csv" required>
+                            </div>
+                            </div>
+                            <div class="modal-footer">
+                            <button type="submit" class="btn btn-info">Import</button>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                            </div>
+                        </div>
+                        </form>
+                    </div>
+                    </div>
+                    @endhasanyrole
 
                   {{--  <div class="modal fade" id="importModal" tabindex="-1" role="dialog"
                         aria-labelledby="importModalLabel" aria-hidden="true">

@@ -23,11 +23,20 @@ class GuruController extends Controller
         $this->middleware(['role:admin|kurikulum']);
     }
 
-    public function index()
-    {
-        $gurus = Guru::orderBy('nama')->paginate(5);
-        return view('guru.index', compact('gurus'));
+   public function index()
+{
+    $gurus = Guru::orderBy('nama')->paginate(5);
+
+    switch (true) {
+        case auth()->user()->hasRole('admin'):
+            return view('layouts.admin.guru.index', compact('gurus'));
+        case auth()->user()->hasRole('kurikulum'):
+            return view('guru.index', compact('gurus'));
+        default:
+            abort(403, 'Tidak diizinkan.');
     }
+}
+
 
     public function create()
     {
