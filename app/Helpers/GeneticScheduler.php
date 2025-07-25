@@ -2,536 +2,325 @@
 
 namespace App\Helpers;
 
+use App\Models\Kelas;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class GeneticScheduler
 {
+    // Properti utama yang digunakan untuk proses genetika
     protected $requirements, $rooms, $waktuList;
     protected $populationSize, $crossoverRate, $mutationRate, $maxGenerations;
     protected $elitism = 2, $stagnationLimit = 30, $noChange = 0;
     protected $mapelJamPerMinggu;
     protected $maxGuruJam;
     protected $kelasToRuangan = [];
-    protected $waktuPerSlot = [];
-    protected $waktuByHari = [];
-    protected $mapelButuhJamBerurutan = [ /* mapel_id yang butuh jam berurutan */ ];
+    protected $waktuCache = [];
+    protected $hariCache = [];
 
-    public function __construct($requirements, $rooms, $waktuList, $popSize=100, $crossRate=0.8, $mutRate=0.2, $gens=200,$mapelJamPerMinggu = [], $maxGuruJam = 42)
+    // Konstruktor untuk inisialisasi data
+    public function __construct($requirements, $rooms, $waktuList, $popSize = 100, $crossRate = 0.8, $mutRate = 0.2, $gens = 200, $mapelJamPerMinggu = [], $maxGuruJam = 60)
     {
-        [$this->requirements, $this->waktuList] = [$requirements, $waktuList];
-        [$this->populationSize, $this->crossoverRate, $this->mutationRate, $this->maxGenerations] =
-        [$popSize, $crossRate, $mutRate, $gens];
-        $this->rooms = collect($rooms); // Ubah rooms jadi Collection
-        //$this ->mapelJamPerMinggu = $mapelJamPerMinggu;
-        if (empty($mapelJamPerMinggu)) {
-            $this->mapelJamPerMinggu = DB::table('mapel')->pluck('jam_per_minggu', 'id')->toArray();
-        } else {
-            $this->mapelJamPerMinggu = $mapelJamPerMinggu;
-        }
-
-        $this->maxGuruJam = $maxGuruJam;
-        $this->groupWaktuPerSlot();
-        $this->waktuList = $this->waktuList
-            ->filter(fn($w) =>
-                !str_contains(strtolower($w->ket), 'istirahat') &&
-                $w->jam_ke >= 1 && $w->jam_ke <= 9
-            )
+        // Filter waktu yang hanya berjenis pelajaran dan urutkan berdasarkan hari dan jam
+        $this->waktuList = collect($waktuList)
+            ->filter(fn($w) => strtolower($w->ket) === 'pelajaran')
             ->sortBy(fn($w) => [$w->hari, $w->jam_ke])
             ->values();
 
-        $this->waktuByHari = $this->waktuList
-            ->groupBy('hari')
-            ->map(function ($grouped) {
-                return $grouped->sortBy('jam_ke')->pluck('id')->values();
-            })->toArray();
+        $this->requirements = $requirements;
+        $this->rooms = collect($rooms);
+        $this->populationSize = $popSize;
+        $this->crossoverRate = $crossRate;
+        $this->mutationRate = $mutRate;
+        $this->maxGenerations = $gens;
+        $this->mapelJamPerMinggu = $mapelJamPerMinggu;
+        $this->maxGuruJam = $maxGuruJam;
 
+        // Petakan kelas ke ruangan
+        $this->mapKelasToRuangan();
+
+        // Cache waktu dan hari untuk mempercepat lookup
+        $this->waktuCache = $this->waktuList->pluck('jam_ke', 'id')->toArray();
+        $this->hariCache = $this->waktuList->pluck('hari', 'id')->toArray();
     }
 
+    // Fungsi utama untuk menjalankan algoritma genetika
     public function run()
     {
-        // ✅ Logging awal proses
-        Log::info("Generasi dimulai...");
+        try {
+            $startTime = microtime(true);
+            $maxSeconds = 60;
 
-        $pop = $this->initialPopulation();
+            // Inisialisasi populasi awal
+            $pop = $this->initialPopulation();
 
-        usort($pop, fn($a, $b) => $this->fitness($b) <=> $this->fitness($a));
-        $bestFit = $this->fitness($pop[0]);
-
-        for ($gen = 1; $gen <= $this->maxGenerations; $gen++) {
-            $newPop = array_slice($pop, 0, $this->elitism);
-            while (count($newPop) < $this->populationSize) {
-                $child = $this->crossoverMulti($pop);
-                $child = $this->mutate($child);
-                $newPop[] = $child;
-            }
-            $pop = $newPop;
+            // Urutkan berdasarkan fitness terbaik
             usort($pop, fn($a, $b) => $this->fitness($b) <=> $this->fitness($a));
-            $curr = $this->fitness($pop[0]);
+            $bestFit = $this->fitness($pop[0]);
 
-            if ($curr <= $bestFit) {
-                $this->noChange++;
-                if ($this->noChange >= $this->stagnationLimit) break;
-            } else {
-                $bestFit = $curr;
-                $this->noChange = 0;
+            // Evolusi generasi
+            for ($gen = 1; $gen <= $this->maxGenerations; $gen++) {
+                if ((microtime(true) - $startTime) > $maxSeconds) break;
+
+                $newPop = array_slice($pop, 0, $this->elitism); // elitism (mempertahankan individu terbaik)
+
+                while (count($newPop) < $this->populationSize) {
+                    $child = $this->crossoverMulti($pop); // crossover
+                    $child = $this->mutate($child);       // mutasi
+                    $newPop[] = $child;
+                }
+
+                $pop = $newPop;
+                usort($pop, fn($a, $b) => $this->fitness($b) <=> $this->fitness($a));
+                $curr = $this->fitness($pop[0]);
+
+                // Cek stagnasi
+                if ($curr <= $bestFit) {
+                    $this->noChange++;
+                    if ($this->noChange >= $this->stagnationLimit) break;
+                } else {
+                    $bestFit = $curr;
+                    $this->noChange = 0;
+                }
             }
+
+            return [
+                'jadwal' => $pop[0],
+                'fitness' => $bestFit
+            ];
+        } catch (\Exception $e) {
+            Log::error('GeneticScheduler error: ' . $e->getMessage());
+            throw $e;
         }
-
-    // ✅ Logging akhir proses
-    Log::info("Generasi selesai. Best fitness: $bestFit");
-
-        return [
-            'jadwal' => $pop[0],
-            'fitness' => $bestFit
-        ];
     }
 
-    //bismillah udah bisa
+    // Membuat populasi awal
     protected function initialPopulation()
     {
         $pop = [];
-
-        // mapping kelas ke ruangan (khusus tipe "kelas")
-        $this->kelasToRuangan = [];
-
-        foreach ($this->rooms as $room) {
-            if (strtolower($room->tipe) === 'kelas') {
-                $kelas = \App\Models\Kelas::where('nama', $room->nama)->first();
-                if ($kelas) {
-                    $this->kelasToRuangan[$kelas->id] = $room->id;
-                }
-            }
-        }
+        $groupedWaktu = $this->waktuList->groupBy('hari');
 
         for ($i = 0; $i < $this->populationSize; $i++) {
             $chrom = [];
-            $mapelCounter = []; // [kelas_id][mapel_id] => jumlah terpakai
-
-            \Log::info(">> Mulai initialPopulation...");
             $kelasList = collect($this->requirements)->pluck('kelas_id')->unique();
-            \Log::info(">> Jumlah kelas yang akan diisi: " . count($kelasList));
-            \Log::info(">> Total requirement: " . count($this->requirements));
 
-            if (empty($this->mapelJamPerMinggu)) {
-                \Log::error(">> mapelJamPerMinggu kosong!");
-            }
             foreach ($kelasList as $kelasId) {
-                \Log::info(">> Menjadwalkan kelas_id: $kelasId");
-                $reqKelas = collect($this->requirements)->where('kelas_id', $kelasId)->values();
+                $kelasReqs = collect($this->requirements)->where('kelas_id', $kelasId);
+                $availableReqs = $kelasReqs->shuffle();
 
-                foreach ($this->waktuByHari as $hari => $waktuIdList) {
-                    \Log::info(">> Hari $hari - jumlah waktu tersedia: " . count($waktuIdList));
-                    $usedWaktu = [];
+                foreach ($groupedWaktu as $hari => $waktus) {
+                    $slotCount = 0;
 
-                    for ($j = 0; $j < 9; $j++) {
-                        // Pilih mapel yang belum melampaui jam_per_minggu
-                        // ✅ Filter hanya mapel yang masih memiliki jam sisa
-                    $filteredReq = $reqKelas->filter(function ($req) use (
-                        $kelasId, $mapelCounter
-                    ) {
-                        $mapelId = $req['mapel_id'];
-                        $max = $this->mapelJamPerMinggu[$mapelId] ?? 0;
-                        $used = $mapelCounter[$kelasId][$mapelId] ?? 0;
-
-                        // Mapel 1 atau 2 jam hanya boleh muncul sekali
-                        if ($max <= 2 && $used >= $max) {
-                            return false;
-                        }
-                        
-
-                        // Mapel ≥ 3 jam masih boleh lanjut jika belum penuh
-                        return $used < $max;
-                    })->values();
-
-                        if ($filteredReq->isEmpty()) break;
-
-                        $req = $filteredReq->random();
-                        $mapelId = $req['mapel_id'];
-                        $jamTersisa = ($this->mapelJamPerMinggu[$mapelId] ?? 0) - ($mapelCounter[$kelasId][$mapelId] ?? 0);
-                        $butuh2Jam = in_array($mapelId, $this->mapelButuhJamBerurutan) || $jamTersisa >= 2;
-
-                        // ✅ Cek guru tersedia
-                        if (empty($req['guru_options'])) continue;
-                        $guru = $req['guru_options'][array_rand($req['guru_options'])];
-
-                        if (($mapelCounter[$kelasId][$mapelId] ?? 0) >= ($this->mapelJamPerMinggu[$mapelId] ?? 0)) {
-                            continue;
-                        }
-
-                        // Tentukan ruangan
-                        $filtered = !empty($req['requires_ruang'])
-                            ? $this->rooms->filter(fn($room) => strtolower($room->tipe) === strtolower($req['requires_ruang']))
-                            : $this->rooms->filter(fn($room) => strtolower($room->tipe) === 'kelas');
-
-                        $ruangan = $filtered->isNotEmpty()
-                            ? $filtered->random()->id
-                            : ($this->kelasToRuangan[$kelasId] ?? $this->rooms->random()->id);
-
-                        // ✅ Penjadwalan 2 jam berurutan
-                        if ($butuh2Jam) {
-                            for ($k = 0; $k < count($waktuIdList) - 1; $k++) {
-                                $waktu1 = $waktuIdList[$k];
-                                $waktu2 = $waktuIdList[$k + 1];
-
-                                $w1 = $this->waktuList->firstWhere('id', $waktu1);
-                                $w2 = $this->waktuList->firstWhere('id', $waktu2);
-
-                                if (
-                                    in_array($waktu1, $usedWaktu) ||
-                                    in_array($waktu2, $usedWaktu) ||
-                                    !$w1 || !$w2 ||
-                                    $w1->hari !== $w2->hari || abs($w1->jam_ke - $w2->jam_ke) !== 1
-                                ) continue;
-
-                                // Jika valid, simpan
-                                $usedWaktu[] = $waktu1;
-                                $usedWaktu[] = $waktu2;
-
-                                for ($slot = 0; $slot < 2; $slot++) {
-                                    $chrom[] = [
-                                        'kelas_id'    => $kelasId,
-                                        'mapel_id'    => $mapelId,
-                                        'guru_id'     => $guru,
-                                        'waktu_id'    => $slot === 0 ? $waktu1 : $waktu2,
-                                        'ruangan_id'  => $ruangan
-                                    ];
-                                    $mapelCounter[$kelasId][$mapelId] = ($mapelCounter[$kelasId][$mapelId] ?? 0) + 1;
-                                }
-                                continue 2; // Lanjut ke iterasi berikutnya
-                            }
-                            // ❗ Tidak ditemukan slot berurutan, log saja
-                            \Log::info("Tidak ditemukan slot berurutan untuk mapel_id {$mapelId} di kelas_id {$kelasId} hari {$hari}");
-                            continue; // jika tidak ketemu slot 2 jam, skip mapel ini
-                        }
-
-                        // ✳️ Jika tidak butuh 2 jam
-                        $availableWaktu = array_values(array_diff($waktuIdList, $usedWaktu));
-                        if (empty($availableWaktu)) break;
-
-                        $waktuId = $availableWaktu[0];
-                        $usedWaktu[] = $waktuId;
-
-                        $chrom[] = [
-                            'kelas_id'    => $kelasId,
-                            'mapel_id'    => $mapelId,
-                            'guru_id'     => $guru,
-                            'waktu_id'    => $waktuId,
-                            'ruangan_id'  => $ruangan
-                        ];
-                        $mapelCounter[$kelasId][$mapelId] = ($mapelCounter[$kelasId][$mapelId] ?? 0) + 1;
+                    // Aturan jumlah slot dan mapel per hari
+                    if ($hari === 'Senin') {
+                        $targetSlot = 6;
+                        $mapelMin = 2;
+                        $mapelMax = 3;
+                        $jamValid = $waktus->whereBetween('jam_ke', [3, 8]);
+                    } elseif (in_array($hari, ['Selasa', 'Rabu', 'Kamis'])) {
+                        $targetSlot = 8;
+                        $mapelMin = 2;
+                        $mapelMax = 4;
+                        $jamValid = $waktus->whereBetween('jam_ke', [1, 8]);
+                    } elseif ($hari === 'Jumat') {
+                        $targetSlot = 5;
+                        $mapelMin = $mapelMax = 2;
+                        $jamValid = $waktus->whereBetween('jam_ke', [1, 5]);
+                    } elseif ($hari === 'Sabtu') {
+                        $targetSlot = 5;
+                        $mapelMin = $mapelMax = 1;
+                        $jamValid = $waktus->whereBetween('jam_ke', [1, 5]);
+                    } else {
+                        continue;
                     }
 
+                    $jamValidIds = $jamValid->pluck('id')->shuffle()->take($targetSlot);
+                    $mapelDipakai = $availableReqs->take($mapelMax)->shuffle()->take(rand($mapelMin, $mapelMax));
+                    $mapelList = $hari === 'Sabtu' ? $mapelDipakai->take(1) : $mapelDipakai;
+
+                    // Alokasikan mapel ke waktu
+                    $slotIdx = 0;
+                    foreach ($mapelList as $req) {
+                        $jamPerMapel = floor($targetSlot / $mapelList->count());
+                        for ($j = 0; $j < $jamPerMapel && $slotIdx < count($jamValidIds); $j++) {
+                            $chrom[] = [
+                                'kelas_id'   => $kelasId,
+                                'mapel_id'   => $req['mapel_id'],
+                                'guru_id'    => $req['guru_options'][array_rand($req['guru_options'])],
+                                'waktu_id'   => $jamValidIds[$slotIdx],
+                                'ruangan_id' => $this->assignRuangan($req, $kelasId)
+                            ];
+                            $slotIdx++;
+                        }
+                    }
                 }
             }
 
             $pop[] = $chrom;
-            
-            // Validasi mapel ≤2 jam tidak muncul di hari berbeda
-                foreach ($chrom as $item) {
-                $mapelId = $item['mapel_id'];
-                $kelasId = $item['kelas_id'];
-                $jamPerminggu = $this->mapelJamPerMinggu[$mapelId] ?? 0;
-
-                $grouped = collect($chrom)
-                    ->where('kelas_id', $kelasId)
-                    ->where('mapel_id', $mapelId)
-                    ->groupBy(function ($x) {
-                        $waktu = $this->waktuList->firstWhere('id', $x['waktu_id']);
-                        return $waktu->hari ?? '??';
-                    });
-
-                // 1. Mapel ≤ 2 jam per minggu tidak boleh menyebar di lebih dari satu hari
-                if ($jamPerminggu <= 2 && count($grouped) > 1) {
-                    $hariList = implode(', ', array_keys($grouped->toArray()));
-                    Log::warning("⚠️ Mapel ID {$mapelId} (≤2 jam) di kelas {$kelasId} muncul di beberapa hari: $hariList");
-                }
-
-                // 2. Mapel 3–4 jam → maksimal 2 jam per hari
-                if ($jamPerminggu >= 3 && $jamPerminggu <= 4) {
-                    foreach ($grouped as $hari => $list) {
-                        if (count($list) > 2) {
-                            Log::warning("⚠️ Mapel ID {$mapelId} ({$jamPerminggu} jam) di kelas {$kelasId} terlalu banyak di hari $hari (" . count($list) . " jam)");
-                        }
-                    }
-                }
-            }
-
         }
-    \Log::info(">> Jumlah kromosom populasi pertama: " . count($pop[0] ?? []));
 
         return $pop;
     }
 
-
-
-    protected function groupWaktuPerSlot()
+    // Mutasi kromosom
+    protected function mutate(array $chrom): array
     {
-        $this->waktuPerSlot = [];
+        foreach ($chrom as &$g) {
+            if (mt_rand() / mt_getrandmax() > $this->mutationRate) continue;
 
-        foreach ($this->waktuList as $waktu) {
-            $slotKey = $waktu->hari . '-' . $waktu->jam_ke;
-            $this->waktuPerSlot[$slotKey][] = $waktu->id;
-        }
-    }
+            $req = collect($this->requirements)->first(
+                fn($r) =>
+                $r['kelas_id'] == $g['kelas_id'] && $r['mapel_id'] == $g['mapel_id']
+            );
 
-    protected function getAvailableTimeSlot($chrom, $guru_id, $kelas_id)
-    {
-        $used = collect($chrom)->groupBy('waktu_id')->map(function ($slots) {
-            return [
-                'guru' => $slots->pluck('guru_id')->all(),
-                'kelas' => $slots->pluck('kelas_id')->all(),
-            ];
-            });
+            if (!$req || empty($req['guru_options'])) continue;
 
-        foreach ($this->waktuList->shuffle() as $w) {
-            $waktuId = $w->id;
-            if (!isset($used[$waktuId])) return $w;
-
-            $wdata = $used[$waktuId];
-            if (!in_array($guru_id, $wdata['guru']) && !in_array($kelas_id, $wdata['kelas'])) {
-                return $w;
-            }
+            $g['guru_id'] = $req['guru_options'][array_rand($req['guru_options'])];
+            $newWaktu = $this->getRandomAvailableWaktu($chrom, $g['kelas_id']);
+            if ($newWaktu) $g['waktu_id'] = $newWaktu;
+            $g['ruangan_id'] = $this->assignRuangan($req, $g['kelas_id']);
         }
 
-        return $this->waktuList->random(); // fallback
+        return $chrom;
     }
 
+    // Fungsi evaluasi kualitas solusi
     protected function fitness($chrom)
     {
         $score = 0;
-        $conflict = [];
-        $load = [];
-        
-        // ✅ Cache waktu_id => hari & jam_ke
-        $waktuCache = [];
-        foreach ($this->waktuList as $w) {
-            $waktuCache[$w->id] = ['hari' => $w->hari, 'jam_ke' => $w->jam_ke];
-        }
 
-        foreach ($chrom as $g) {
-            $w = $g['waktu_id'];
+        $byHariKelas = collect($chrom)->groupBy(fn($g) => $this->hariCache[$g['waktu_id']] . '-' . $g['kelas_id']);
 
-            foreach (['kelas_id', 'guru_id', 'ruangan_id'] as $key) {
-                $val = $g[$key] ?? null;
-                if ($val && isset($conflict[$w][$key][$val])) {
-                    $score -= 10000; // ❗ Penalti besar
-                } else {
-                    $conflict[$w][$key][$val] = true;
-                    $score += 10;
-                }
+        foreach ($byHariKelas as $hariKelas => $genes) {
+            [$hari, $kelasId] = explode('-', $hariKelas);
+            $jamKeList = $genes->pluck('waktu_id')->map(fn($id) => $this->waktuCache[$id])->unique()->sort()->values();
+            $mapelList = $genes->pluck('mapel_id')->unique();
+
+            $countSlot = $jamKeList->count();
+            $countMapel = $mapelList->count();
+
+            // Mulai dari nilai dasar tiap hari valid
+            $baseScore = 0;
+            $valid = false;
+
+            if ($hari === 'Senin') {
+                $valid = $countSlot == 6 && $countMapel >= 2 && $countMapel <= 3 && $jamKeList->min() >= 3 && $jamKeList->max() <= 8;
+                $baseScore = 1000;
+            } elseif (in_array($hari, ['Selasa', 'Rabu', 'Kamis'])) {
+                $valid = $countSlot == 8 && $countMapel <= 4 && $jamKeList->min() >= 1 && $jamKeList->max() <= 8;
+                $baseScore = 1200;
+            } elseif ($hari === 'Jumat') {
+                $valid = $countSlot == 5 && $countMapel == 2 && $jamKeList->min() >= 1 && $jamKeList->max() <= 5;
+                $baseScore = 800;
+            } elseif ($hari === 'Sabtu') {
+                $valid = $countSlot == 5 && $countMapel == 1 && $genes->every(fn($g) => $g['mapel_id'] == $mapelList->first());
+                $baseScore = 700;
             }
 
-            $load[$g['guru_id']][] = $w;
-        }
+            if ($valid) {
+                // Tambahkan skor jika valid
+                $score += $baseScore;
 
-        // Penalti jika beban guru melebihi batas
-        // foreach ($load as $slots) {
-        //     $overload = max(0, count($slots) - 6);
-        //     $score -= $overload * 50;
-        // }
-            foreach ($load as $guruId => $slots) {
-            $totalJam = count(array_unique($slots));
-            $maxJam = 24; // Misalnya maksimal 24 jam per minggu
-
-            if ($totalJam > $maxJam) {
-                $score -= ($totalJam - $maxJam) * 100; // Penalti besar
-            }
-        }
-
-
-        // Penalti jika alokasi jam mapel tidak sesuai
-        $kelasMapelJam = [];
-        foreach ($chrom as $g){
-            $key = $g['kelas_id'] . '-' . $g['mapel_id'];
-            if (!isset($kelasMapelJam[$key])) $kelasMapelJam[$key] = 0;
-            $kelasMapelJam[$key]++;
-        }
-
-        foreach ($kelasMapelJam as $key => $jumlahSlot) {
-            [$kelasId, $mapelId] = explode('-', $key);
-            $mapelId = (int) $mapelId;
-
-            $maksSlot = $this->mapelJamPerMinggu[$mapelId] ?? 0;
-
-            if ($jumlahSlot > $maksSlot) {
-                $score -= ($jumlahSlot - $maksSlot) * 300;
-            } elseif ($jumlahSlot < $maksSlot) {
-                $score -= ($maksSlot - $jumlahSlot) * 200;
-            }
-        }
-
-        // Bonus jika mapel berurutan benar
-        foreach ($chrom as $g) {
-            if (in_array($g['mapel_id'], $this->mapelButuhJamBerurutan)) {
-                $sameDay = collect($chrom)->filter(fn($x) =>
-                    $x['kelas_id'] === $g['kelas_id'] &&
-                    $x['mapel_id'] === $g['mapel_id'] &&
-                    $waktuCache[$x['waktu_id']]['hari'] ?? null === $waktuCache[$g['waktu_id']]['hari'] ?? null
-                )->pluck('waktu_id')->sort()->values();
-
-                for ($i = 0; $i < count($sameDay) - 1; $i++) {
-                    $a = $waktuCache[$sameDay[$i]]['jam_ke'] ?? null;
-                    $b = $waktuCache[$sameDay[$i+1]]['jam_ke'] ?? null;
-                    if ($b - $a === 1) {
-                        $score += 100; // Bonus skor jika benar
+                // Bonus jika jam berurutan (tidak lompat-lompat)
+                $isSequential = true;
+                for ($i = 1; $i < $jamKeList->count(); $i++) {
+                    if ($jamKeList[$i] != $jamKeList[$i - 1] + 1) {
+                        $isSequential = false;
                         break;
                     }
                 }
+                if ($isSequential) $score += 200;
+
+                // Bonus jika mapel tidak diulang-ulang dalam hari itu
+                if ($countMapel == $genes->count()) {
+                    $score += 100;
+                }
+            } else {
+                // Penalti berat jika tidak valid
+                $score -= 1000;
             }
         }
 
-
-        return $score;
+        return max($score, 0); // Pastikan tidak negatif
     }
 
-    // protected function getHari($waktu_id)
-    // {
-    //     $w = $this->waktuList->firstWhere('id', $waktu_id);
-    //     return $w ? $w->hari : null;
-    // }
-
-    // protected function getJamKe($waktu_id)
-    // {
-    //     $w = $this->waktuList->firstWhere('id', $waktu_id);
-    //     return $w ? $w->jam_ke : null;
-    // }
-
-    protected function isMapelBerurutan($chrom, $mapel_id, $kelas_id)
+    // Crossover menggunakan beberapa parent
+    protected function crossoverMulti(array $pop): array
     {
-        $slots = collect($chrom)
-            ->where('kelas_id', $kelas_id)
-            ->where('mapel_id', $mapel_id)
-            ->pluck('waktu_id')
-            ->map(function ($waktu_id) {
-                $w = $this->waktuList->firstWhere('id', $waktu_id);
-                return $w ? [$w->hari, $w->jam_ke] : null;
-            })
-            ->filter()
-            ->values()
-            ->sortBy(fn($x) => $x[0] . $x[1]);
-
-        // Cek apakah ada dua jam ke berurutan di hari yang sama
-        for ($i = 0; $i < $slots->count() - 1; $i++) {
-            [$hari1, $jam1] = $slots[$i];
-            [$hari2, $jam2] = $slots[$i + 1];
-            if ($hari1 === $hari2 && $jam2 === $jam1 + 1) {
-                return true; // ✅ valid
-            }
-        }
-
-        return false;
-    }
-
-
-
-    protected function selectTournament($pop)
-    {
-        $best = null;
-        for ($i = 0; $i < 3; $i++) {
-            $cand = $pop[array_rand($pop)];
-            if (!$best || $this->fitness($cand) > $this->fitness($best)) {
-                $best = $cand;
-            }
-        }
-        return $best;
-    }
-
-    protected function crossoverMulti($pop)
-    {
-        $parents = [];
-        for ($i = 0; $i < 5; $i++) {
-            $parents[] = $this->selectTournament($pop);
-        }
-        $len = count($parents[0]);
+        $parents = $this->selectMultipleParents($pop, 5);
         $child = [];
+        $len = min(array_map('count', $parents));
 
         for ($i = 0; $i < $len; $i++) {
-            $p = $parents[random_int(0, 4)];
-            $child[$i] = $p[$i];
+            $parent = $parents[random_int(0, count($parents) - 1)];
+            $child[$i] = $parent[$i];
         }
 
         return $child;
     }
 
-    //benar
-    protected function mutate($chrom)
+    // Seleksi beberapa parent menggunakan tournament
+    protected function selectMultipleParents(array $pop, int $count): array
     {
-        foreach ($chrom as &$g) {
-            $rate = $this->mutationRate * ($this->noChange ? 1.5 : 1);
-            if (mt_rand() / mt_getrandmax() < $rate) {
-                $req = collect($this->requirements)->first(fn($r) =>
-                    $r['kelas_id'] == $g['kelas_id'] && $r['mapel_id'] == $g['mapel_id']
-                );
+        $parents = [];
+        for ($i = 0; $i < $count; $i++) {
+            $parents[] = $this->selectTournament($pop);
+        }
+        return $parents;
+    }
 
-                // Mutasi guru
-                if (random_int(0, 1)) {
-                    $g['guru_id'] = $req['guru_options'][array_rand($req['guru_options'])];
-                }
+    // Tournament selection untuk seleksi parent terbaik
+    protected function selectTournament($pop)
+    {
+        $best = null;
+        for ($i = 0; $i < 3; $i++) {
+            $candidate = $pop[array_rand($pop)];
+            if (!$best || $this->fitness($candidate) > $this->fitness($best)) {
+                $best = $candidate;
+            }
+        }
+        return $best;
+    }
 
-
-                // Mutasi waktu
-                $slotKe = array_rand($this->waktuPerSlot);
-                $waktuIdList = $this->waktuPerSlot[$slotKe];
-                shuffle($waktuIdList);
-                foreach ($waktuIdList as $waktuId) {
-                    $conflict = false;
-                    foreach ($chrom as $other) {
-                        if ($other === $g) continue;
-                        if ($other['waktu_id'] == $waktuId &&
-                            ($other['guru_id'] == $g['guru_id'] ||
-                            $other['kelas_id'] == $g['kelas_id'] ||
-                            $other['ruangan_id'] == $g['ruangan_id'])) {
-                            $conflict = true;
-                            break;
-                        }
-                    }
-                    if (!$conflict) {
-                        $g['waktu_id'] = $waktuId;
-                        break;
-                    }
-                }
-
-
-                if (!empty($req['requires_ruang'])) {
-                    $filteredRooms = $this->rooms->filter(fn($room) =>
-                        strtolower($room->tipe) === $req['requires_ruang']
-                    );
-                    if ($filteredRooms->isNotEmpty()) {
-                        $g['ruangan_id'] = $filteredRooms->random()->id;
-                    }
-                } else {
-                    // Tetapkan ruangan ke ruangan sesuai kelas (kelas_id => ruangan_id)
-                    if (isset($this->kelasToRuangan[$g['kelas_id']])) {
-                        $g['ruangan_id'] = $this->kelasToRuangan[$g['kelas_id']];
-                    }
-                }
+    // Alokasikan ruangan untuk requirement tertentu
+    protected function assignRuangan($req, $kelasId)
+    {
+        if (!empty($req['requires_ruang'])) {
+            $filtered = $this->rooms->filter(fn($r) => strtolower($r->tipe) === strtolower($req['requires_ruang']));
+            if ($filtered->isNotEmpty()) {
+                return $filtered->random()->id;
             }
         }
 
-        return $this->localRepair($chrom);
+        return $this->kelasToRuangan[$kelasId] ?? $this->rooms->random()->id;
     }
 
-     protected function localRepair($chrom)
+    // Petakan nama kelas ke ruangan jika tipe ruang = kelas
+    protected function mapKelasToRuangan()
     {
-        $n = count($chrom);
-        if ($n < 2) return $chrom; // tidak cukup data untuk swap
-
-        for ($i = 0; $i < 30; $i++) {
-            $a = rand(0, $n - 1);
-            $b = rand(0, $n - 1);
-            if ($a === $b) continue;
-
-            $old = [$chrom[$a], $chrom[$b]];
-            [$chrom[$a]['waktu_id'], $chrom[$b]['waktu_id']] = [$chrom[$b]['waktu_id'], $chrom[$a]['waktu_id']];
-            $newFitness = $this->fitness([$chrom[$a], $chrom[$b]]);
-
-            // Jika memburuk, kembalikan
-            if ($newFitness < $this->fitness($old)) {
-                [$chrom[$a]['waktu_id'], $chrom[$b]['waktu_id']] = [$chrom[$b]['waktu_id'], $chrom[$a]['waktu_id']];
+        foreach ($this->rooms as $room) {
+            if (strtolower($room->tipe) === 'kelas') {
+                $kelas = Kelas::where('nama', $room->nama)->first();
+                if ($kelas) {
+                    $this->kelasToRuangan[$kelas->id] = $room->id;
+                }
             }
         }
-        return $chrom;
     }
 
+    // Ambil semua waktu yang valid per hari
+    protected function getValidWaktuPerHari()
+    {
+        return $this->waktuList->groupBy('hari')->map(fn($waktus) => $waktus->pluck('id'));
+    }
+
+    // Ambil waktu acak yang belum dipakai untuk kelas tertentu
+    protected function getRandomAvailableWaktu($chrom, $kelasId)
+    {
+        $usedWaktu = collect($chrom)->where('kelas_id', $kelasId)->pluck('waktu_id')->toArray();
+        $allIds = $this->waktuList->pluck('id')->toArray();
+        $remaining = array_diff($allIds, $usedWaktu);
+
+        return !empty($remaining) ? collect($remaining)->random() : null;
+    }
 }

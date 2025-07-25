@@ -2,24 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Jobs\GenerateJadwalJob;
 use App\Models\Guru;
-use App\Models\Mapel;
 use App\Models\Kelas;
-use App\Models\Ruangan;
-use App\Models\Pengampu;
+use App\Models\Mapel;
 use App\Models\Waktu;
 use App\Models\Jadwal;
+use App\Models\JadwalConflict;
+use App\Models\Ruangan;
+use App\Models\Pengampu;
+use Illuminate\Http\Request;
+use App\Jobs\GenerateJadwalJob;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Exports\JadwalGuruExport;
 use App\Helpers\GeneticScheduler;
 use App\Exports\JadwalKelasExport;
-use App\Exports\JadwalGuruExport;
-use Illuminate\Support\Facades\Log;
 use App\Services\SchedulerService;
-use App\Exports\JadwalPerKelasExport;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Exports\JadwalPerGuruExport;
 use Maatwebsite\Excel\Facades\Excel;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Exports\JadwalPerKelasExport;
 
 class JadwalController extends Controller
 {
@@ -32,25 +34,23 @@ class JadwalController extends Controller
             ->when($request->kelas_id, fn($q) => $q->where('kelas_id', $request->kelas_id))
             ->when($request->hari, fn($q) => $q->whereHas('waktu', fn($w) => $w->where('hari', $request->hari)))
             ->when($request->guru_id, fn($q) => $q->where('guru_id', $request->guru_id))
-            ->when($request->ruangan_id, fn($q) => $q->where('ruangan_id', $request->ruangan_id))
+            ->join('waktu', 'jadwal.waktu_id', '=', 'waktu.id')
+            ->orderByRaw("FIELD(waktu.hari, 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu')")
+            ->orderBy('waktu.jam_mulai')
+            ->select('jadwal.*')
             ->get();
 
-        //Default kelas_id jika belum dipilih user → ambil kelas pertama
-        // $selectedKelasId = $request->kelas_id ?? $kelasList->first()?->id;
-        // $kelas_aktif = Kelas::find($selectedKelasId);
-        // $selectedGuruId = $request->guru_id ?? $guruList->first()?->id;
-        // $guru_aktif = Guru::find($selectedGuruId);
+
+
         $selectedKelasId = $request->kelas_id ?? null;
         $selectedGuruId = $request->guru_id ?? null;
 
         $kelas_aktif = $selectedKelasId ? Kelas::find($selectedKelasId) : null;
         $guru_aktif = $selectedGuruId ? Guru::find($selectedGuruId) : null;
 
-
-
-
         return view('jadwal.index', compact('jadwals', 'kelasList', 'guruList', 'ruanganList', 'selectedKelasId', 'kelas_aktif', 'selectedGuruId', 'guru_aktif'));
     }
+
 
     function isWaktuBentrok($kelas_id, $guru_id, $ruangan_id, $waktu_id)
     {
@@ -64,94 +64,115 @@ class JadwalController extends Controller
 
         return $conflict; // true = bentrok
     }
-
+    
     public function generateProcess(Request $request, SchedulerService $svc)
     {
+        // Validasi input
         $validated = $request->validate([
-            'popSize'=>'required|integer|min:2',
-            'crossRate'=>'required|numeric|between:0.6,1',
-            'mutRate'=>'required|numeric|between:0.1,1',
-            'generations'=>'required|integer|min:1',
-            'tries'=>'nullable|integer|min:1|max:10',
+            'popSize' => 'required|integer|min:2',
+            'crossRate' => 'required|numeric|between:0.6,1',
+            'mutRate' => 'required|numeric|between:0.1,1',
+            'generations' => 'required|integer|min:1',
+            'tries' => 'nullable|integer|min:1|max:10',
         ]);
-
+    
+        // Proses generate jadwal
         [$bestSchedule, $conflicts, $skipped, $fitness] = $svc->generate($validated);
-        $count = $svc->save($bestSchedule);
-        \Log::info('Jumlah Jadwal yang akan disimpan: ' . count($bestSchedule));
-
-        return view('jadwal.evaluasi', [
-            'total' => count($bestSchedule),
-            'skipped' => $skipped,  // Karena semua berhasil disimpan
-            // Kalau mau tampilkan analisis konflik:
-            'conflict_estimation' => $skipped,
-            'conflict_details' => $conflicts,
-            'fitness' => $fitness,
-            
-        ]);
+        $savedCount = $svc->save($bestSchedule);
+    
+        // Simpan skor fitness
+        file_put_contents(storage_path('logs/fitness.txt'), $fitness);
+        
+        return redirect()->route('jadwal.index');
     }
 
-    public function perKelas()
-    {
-        $hariList = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-        $maxJam = 6;
-        $kelasList = Kelas::all();
-        $jadwal = Jadwal::with(['guru', 'mapel', 'ruangan'])->get();
 
-        return view('jadwal.per_kelas', compact('hariList', 'maxJam', 'kelasList', 'jadwal'));
-    }
-
-    public function perGuru()
-    {
-        $hariList = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-        $guruList = Guru::all();
-        $jadwal = Jadwal::with(['mapel', 'kelas', 'ruangan'])->get();
-
-        return view('jadwal.per_guru', compact('hariList', 'guruList', 'jadwal'));
-    }
-
-    public function perMapel()
-    {
-        $hariList = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-        $mapelList = Mapel::all();
-        $jadwal = Jadwal::with(['guru', 'kelas', 'ruangan'])->get();
-
-        return view('jadwal.per_mapel', compact('hariList', 'mapelList', 'jadwal'));
-    }
 
     public function evaluasi()
     {
-        $total = Jadwal::count();
-        $requirements = \App\Models\Pengampu::count();
-        $skipped = $requirements - $total;
-
-        return view('jadwal.evaluasi', compact('total', 'skipped'));
+        // Ambil semua jadwal lengkap dengan relasi
+        $jadwals = \App\Models\Jadwal::with(['guru', 'kelas', 'mapel', 'ruangan', 'waktu'])->get();
+    
+        // Total jadwal yang berhasil disimpan
+        $total = $jadwals->count();
+    
+        // Total ideal berdasarkan semua jam_per_minggu
+        $requirements = \App\Models\Pengampu::with('mapel')->get();
+        $expectedTotal = $requirements->sum(fn($p) => $p->mapel->jam_per_minggu ?? 0);
+    
+        // Deteksi konflik (guru, kelas, ruangan bentrok di waktu yang sama)
+        $conflicts = [];
+    
+        foreach ($jadwals as $i => $a) {
+            foreach ($jadwals as $j => $b) {
+                if ($i >= $j) continue; // Hindari duplikat dan diri sendiri
+    
+                $sameTime = $a->waktu_id === $b->waktu_id;
+    
+                if (!$sameTime) continue;
+    
+                $waktuText = $a->waktu
+                    ? $a->waktu->hari . ' ' . $a->waktu->jam_mulai . ' - ' . $a->waktu->jam_selesai
+                    : 'Waktu ID: ' . $a->waktu_id;
+    
+                // Cek konflik guru
+                if ($a->guru_id && $a->guru_id === $b->guru_id) {
+                    $conflicts[] = [
+                        'type' => 'guru',
+                        'waktu' => $waktuText,
+                        'guru' => $a->guru->nama ?? 'Guru ID: ' . $a->guru_id,
+                        'kelas_a' => $a->kelas->nama ?? 'Kelas A ID: ' . $a->kelas_id,
+                        'kelas_b' => $b->kelas->nama ?? 'Kelas B ID: ' . $b->kelas_id,
+                    ];
+                }
+    
+                // Cek konflik kelas
+                if ($a->kelas_id && $a->kelas_id === $b->kelas_id) {
+                    $conflicts[] = [
+                        'type' => 'kelas',
+                        'waktu' => $waktuText,
+                        'kelas' => $a->kelas->nama ?? 'Kelas ID: ' . $a->kelas_id,
+                        'mapel_a' => $a->mapel->nama ?? 'Mapel A ID: ' . $a->mapel_id,
+                        'mapel_b' => $b->mapel->nama ?? 'Mapel B ID: ' . $b->mapel_id,
+                    ];
+                }
+    
+                // Cek konflik ruangan
+                if ($a->ruangan_id && $a->ruangan_id === $b->ruangan_id) {
+                    $conflicts[] = [
+                        'type' => 'ruangan',
+                        'waktu' => $waktuText,
+                        'ruangan' => $a->ruangan->nama ?? 'Ruangan ID: ' . $a->ruangan_id,
+                        'kelas_a' => $a->kelas->nama ?? 'Kelas A ID: ' . $a->kelas_id,
+                        'kelas_b' => $b->kelas->nama ?? 'Kelas B ID: ' . $b->kelas_id,
+                    ];
+                }
+            }
+        }
+    
+        // Hitung jumlah konflik dan tidak konflik
+        $conflictCount = count($conflicts);
+        $nonConflictCount = $total - $conflictCount;
+    
+        // Ambil nilai fitness dari file jika ada
+        $fitness = null;
+        $fitnessFile = storage_path('logs/fitness.txt');
+        if (file_exists($fitnessFile)) {
+            $fitness = file_get_contents($fitnessFile);
+        }
+    
+        return view('jadwal.evaluasi', [
+            'total' => $total,
+            'expected' => $expectedTotal,
+            'skipped' => $expectedTotal - $total,
+            'fitness' => $fitness,
+            'conflicts' => $conflicts,
+            'conflictCount' => $conflictCount,
+            'nonConflictCount' => $nonConflictCount,
+        ]);
     }
 
-
-    public function filter(Request $request)
-    {
-        $jadwal = Jadwal::with(['waktu', 'guru', 'mapel', 'kelas', 'ruangan']);
-
-        if ($request->filled('kelas_id')) {
-            $jadwal->where('kelas_id', $request->kelas_id);
-        }
-        if ($request->filled('hari')) {
-            $jadwal->whereHas('waktu', fn($q) => $q->where('hari', $request->hari));
-        }
-        if ($request->filled('guru_id')) {
-            $jadwal->where('guru_id', $request->guru_id);
-        }
-        if ($request->filled('ruangan_id')) {
-            $jadwal->where('ruangan_id', $request->ruangan_id);
-        }
-
-        $jadwals = $jadwal->get();
-        $kelas = Kelas::all();
-        $guru = Guru::all();
-        $ruang = Ruangan::all();
-
-        return view('jadwal.index', compact('jadwals', 'kelas', 'guru', 'ruang'));
-    }
+    
     public function showGenerateForm()
     {
         return view('jadwal.generate');
@@ -159,21 +180,18 @@ class JadwalController extends Controller
 
     public function reset()
     {
-        // Menghapus semua data jadwal
-        Jadwal::truncate(); // kosongkan semua entri jadwal
+        Jadwal::truncate();
 
         return redirect()->route('jadwal.index')->with('success', 'Semua jadwal berhasil direset.');
     }
- 
 
 
-//taruh bawah karena package PDF belum terinstall
-   public function exportPDFKelas($id)
+    public function exportPDFKelas($id)
     {
         $kelas = Kelas::findOrFail($id);
         $jadwals = Jadwal::with(['mapel', 'guru', 'waktu', 'ruangan'])
-                    ->where('kelas_id', $id)
-                    ->get();
+            ->where('kelas_id', $id)
+            ->get();
 
         $pdf = PDF::loadView('jadwal.pdf_kelas', compact('kelas', 'jadwals'));
         return $pdf->download("jadwal-{$kelas->nama}.pdf");
@@ -183,8 +201,8 @@ class JadwalController extends Controller
     {
         $guru = Guru::findOrFail($id);
         $jadwals = Jadwal::with(['mapel', 'kelas', 'waktu', 'ruangan'])
-                    ->where('guru_id', $id)
-                    ->get();
+            ->where('guru_id', $id)
+            ->get();
 
         $pdf = PDF::loadView('jadwal.pdf_guru', compact('guru', 'jadwals'));
         return $pdf->download("jadwal-{$guru->nama}.pdf");
@@ -201,5 +219,5 @@ class JadwalController extends Controller
     {
         $guru = Guru::findOrFail($id);
         return Excel::download(new JadwalPerGuruExport($id), "jadwal-{$guru->nama}.xlsx");
-    }// JadwalController.php
+    }
 }

@@ -55,7 +55,7 @@
 
 
     {{-- <div class="mb-3">
-        <a href="#" class="mdi mdi-printer">🖨️ Export PDF</a>
+        <a href="#" class="mdi mdi-printer">🖨 Export PDF</a>
         <a href="#" class="mdi mdi-file-excel">📥 Export Excel</a>
     </div> --}}
 
@@ -75,34 +75,71 @@
                 <a href="{{ route('jadwal.evaluasi') }}" >
                     <i class="mdi mdi-chart-pie text-warning mb-3"></i> Lihat Evaluasi
                 </a>
+                <!-- Kanan: Tombol Reset -->
                 
             </div>
-
-            <!-- Kanan: Tombol Reset -->
-            <form action="{{ route('jadwal.reset') }}" method="POST" onsubmit="return confirm('Yakin ingin mereset semua jadwal?')">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="btn btn-outline-danger btn-sm">
+                <!-- Link yang memicu modal -->
+                <a href="#" class="text-danger" data-toggle="modal" data-target="#modal-reset-jadwal">
                     <i class="bi bi-trash"></i> Reset Jadwal
-                </button>
-            </form>
+                </a>
+
+                <!-- Modal -->
+                <div class="modal fade" id="modal-reset-jadwal" tabindex="-1" role="dialog" aria-labelledby="modalResetJadwalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                    
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalResetJadwalLabel">Konfirmasi Reset Jadwal</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
+                        <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    
+                    <div class="modal-body">
+                        <p>Apakah Anda yakin ingin <b>menghapus semua jadwal</b>? Tindakan ini tidak dapat dibatalkan.</p>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <form action="{{ route('jadwal.reset') }}" method="POST">
+                            @csrf
+                            @method('DELETE')
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-danger">Reset Jadwal</button>
+                        </form>
+                    </div>
+
+                    </div>
+                </div>
+                </div>
+
         </div>
 
+      @php
+    $kelasToShow = request('kelas_id') 
+        ? $kelasList->where('id', request('kelas_id')) 
+        : $kelasList;
 
-        @php
-            $kelasToShow = request('kelas_id') 
-                ? $kelasList->where('id', request('kelas_id')) 
-                : $kelasList;
-        @endphp
+    $urutanHari = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+@endphp
 
-        @foreach($kelasToShow as $kelas)
-            <div class="card mb-4">
-                <div class="card-header bg-info text-white">
-                    Jadwal Kelas {{ $kelas->nama }}
-                </div>
+@foreach($kelasToShow as $kelas)
+    @php
+        $jadwalKelas = $jadwals->where('kelas_id', $kelas->id);
+
+        $jadwalSorted = $jadwalKelas->sortBy(function ($jadwal) use ($urutanHari) {
+            $indexHari = array_search($jadwal->waktu->hari, $urutanHari);
+            return sprintf('%02d-%02d', $indexHari, $jadwal->waktu->jam_ke);
+        });
+    @endphp
+
+    @if($jadwalKelas->isNotEmpty())
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                Jadwal Kelas {{ $kelas->nama }}
+            </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <p>Total Jadwal Tersimpan: {{ $jadwals->count() }}</p>
+                    <p class="p-3">Total Jadwal Tersimpan: {{ $jadwalKelas->count() }}</p>
                     <table class="table table-bordered text-center m-0">
                         <thead class="table-light">
                             <tr>
@@ -114,7 +151,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($jadwals->where('kelas_id', $kelas->id)->sortBy('waktu.hari')->sortBy('waktu.jam_ke') as $jadwal)
+                            @foreach($jadwalSorted as $jadwal)
                                 <tr>
                                     <td>{{ $jadwal->waktu->hari }}</td>
                                     <td>{{ $jadwal->waktu->jam_ke }} ({{ $jadwal->waktu->jam_mulai }} - {{ $jadwal->waktu->jam_selesai }})</td>
@@ -128,7 +165,10 @@
                 </div>
             </div>
         </div>
-    @endforeach
+    @endif
+@endforeach
+
+
  @endif
  <script>
 document.getElementById().addEventListener('click', function () {
