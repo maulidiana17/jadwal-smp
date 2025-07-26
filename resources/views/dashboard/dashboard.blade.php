@@ -264,7 +264,7 @@
         <div>
             <strong>{{ date("d M Y", strtotime($d->tgl_absen)) }}</strong><br>
             <small class="text-muted">Masuk: {{ $d->jam_masuk }}</small><br>
-            @if($d->jam_masuk > '10:00')
+            @if($d->jam_masuk > '14:00')
                 <span class="badge bg-danger">Terlambat</span><br>
             @endif
             <small class="text-muted">Pulang: {{ $d->jam_keluar ?? 'Belum Absen' }}</small>

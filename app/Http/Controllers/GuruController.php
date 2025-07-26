@@ -351,7 +351,7 @@ class GuruController extends Controller
 
         $jumlahterlambat = DB::table('absensi')
             ->where('tgl_absen', $hariini)
-            ->where('jam_masuk', '>', '10:00')
+            ->where('jam_masuk', '>', '14:00')
             ->count();
 
         $siswaIzin = DB::table('pengajuan_izin')

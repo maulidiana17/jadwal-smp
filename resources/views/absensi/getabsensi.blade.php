@@ -39,9 +39,9 @@
         </td>
         <td>{!! $d->jam_keluar != null ? $d->jam_keluar : '<span class="badge bg-danger"> Belum Absen </span>' !!}</td>
         <td>
-            @if($d->jam_masuk >= '10:00')
+            @if($d->jam_masuk >= '14:00')
             @php
-                $jamterlambat = selisih('10:00:00', $d->jam_masuk);
+                $jamterlambat = selisih('14:00:00', $d->jam_masuk);
             @endphp
                 <span class="badge bg-danger">Terlambat {{ $jamterlambat }}</span>
             @else

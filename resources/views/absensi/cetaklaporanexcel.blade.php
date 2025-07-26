@@ -95,7 +95,7 @@
         @php $no = 1; @endphp
         @foreach($tanggalData as $data)
             @php
-                $jamterlambat = isset($data['jam_masuk']) ? selisih('10:00:00', $data['jam_masuk']) : null;
+                $jamterlambat = isset($data['jam_masuk']) ? selisih('14:00:00', $data['jam_masuk']) : null;
             @endphp
             <tr>
                 <td style="border: 1px solid #000; padding: 6px; text-align: center;">{{ $no++ }}</td>
@@ -109,7 +109,7 @@
                 </td>
                 <td style="border: 1px solid #000; padding: 6px;">
                     @if($data['status'] == 'absen')
-                        @if(isset($data['jam_masuk']) && $data['jam_masuk'] > '10:00')
+                        @if(isset($data['jam_masuk']) && $data['jam_masuk'] > '14:00')
                             Terlambat {{ $jamterlambat }}
                         @else
                             Tepat Waktu
