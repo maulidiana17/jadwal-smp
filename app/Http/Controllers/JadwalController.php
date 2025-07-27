@@ -193,19 +193,49 @@ class JadwalController extends Controller
             ->where('kelas_id', $id)
             ->get();
 
-        $pdf = PDF::loadView('jadwal.pdf_kelas', compact('kelas', 'jadwals'));
-        return $pdf->download("jadwal-{$kelas->nama}.pdf");
+        $pdf = PDF::loadView('jadwal.print_kelas', compact('kelas', 'jadwals'));
+        return $pdf->stream("jadwal-{$kelas->nama}.pdf");
     }
 
     public function exportPDFGuru($id)
     {
         $guru = Guru::findOrFail($id);
-        $jadwals = Jadwal::with(['mapel', 'kelas', 'waktu', 'ruangan'])
+
+        // Ambil semua jadwal guru ini dan relasi lengkap
+        $jadwalItems = Jadwal::with(['kelas', 'waktu', 'mapel', 'ruangan'])
             ->where('guru_id', $id)
             ->get();
 
-        $pdf = PDF::loadView('jadwal.pdf_guru', compact('guru', 'jadwals'));
-        return $pdf->download("jadwal-{$guru->nama}.pdf");
+        // Susun data jadi struktur: $data[$kelas][$hari][$jam_ke] = ['teks' => ..., 'color' => ...]
+        $jadwals = [];
+
+        $colors = ['#d1e7dd', '#fde2e2', '#e0d4fd', '#fdf6b2', '#caf0f8', '#ffc8dd'];
+        $colorIndex = 0;
+
+        foreach ($jadwalItems as $item) {
+            $kelasNama = $item->kelas->nama;
+            $hari = $item->waktu->hari;
+            $jam = $item->waktu->jam_ke;
+
+            $mapelKode = $item->mapel->kode_mapel ?? $item->mapel->mapel;
+            $ruangan = $item->ruangan->nama;
+            $teks = "<strong>$mapelKode</strong><br><small>R.$ruangan</small>";
+
+            if (!isset($jadwals[$kelasNama][$hari][$jam])) {
+                $jadwals[$kelasNama][$hari][$jam] = [
+                    'teks' => $teks,
+                    'color' => $colors[$colorIndex % count($colors)],
+                ];
+                $colorIndex++;
+            }
+        }
+
+        $pdf = Pdf::loadView('jadwal.print_guru', [
+            'guru' => $guru,
+            'jadwals' => $jadwals,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream('Jadwal-Guru-' . $guru->nama . '.pdf');
     }
 
 
@@ -218,6 +248,21 @@ class JadwalController extends Controller
     public function exportExcelGuru($id)
     {
         $guru = Guru::findOrFail($id);
-        return Excel::download(new JadwalPerGuruExport($id), "jadwal-{$guru->nama}.xlsx");
+        return Excel::download(new JadwalPerGuruExport($guru), 'Jadwal-Guru-' . $guru->nama . '.xlsx');
     }
+
+    public function exportAllPDF()
+    {
+        $jadwals = Jadwal::with(['kelas', 'mapel', 'guru', 'ruangan', 'waktu'])
+                        ->orderBy('kelas_id')
+                        ->orderBy('waktu_id')
+                        ->get();
+
+        $pdf = Pdf::loadView('jadwal.print', compact('jadwals'))
+                    ->setPaper('a4', 'landscape');
+
+        return $pdf->stream('jadwal-pelajaran-semua.pdf');
+    }
+
+
 }

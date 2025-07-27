@@ -3,41 +3,50 @@
 namespace App\Exports;
 
 use App\Models\Jadwal;
-use Maatwebsite\Excel\Concerns\FromCollection;
+use App\Models\Guru;
 use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\FromArray;
+use Maatwebsite\Excel\Concerns\WithTitle;
 
-class JadwalPerGuruExport implements FromCollection, WithHeadings, WithMapping
+class JadwalPerGuruExport implements FromArray, WithHeadings, WithTitle
 {
-    /**
-    * @return \Illuminate\Support\Collection
-    */
-    protected $guruId;
+    protected $guru;
 
-    public function __construct($guruId)
+    public function __construct($guru)
     {
-        $this->guruId = $guruId;
+        $this->guru = $guru;
     }
 
-    public function collection()
+    public function array(): array
     {
-        return Jadwal::with(['kelas', 'guru', 'mapel', 'ruangan', 'waktu'])
-            ->where('guru_id', $this->guruId)->get();
+        $jadwals = Jadwal::with(['kelas', 'waktu', 'mapel', 'ruangan'])
+            ->where('guru_id', $this->guru->id)
+            ->get();
+
+        // Susun data seperti: [Kelas, Hari, Jam ke, Mapel, Ruangan]
+        $data = [];
+
+        foreach ($jadwals as $item) {
+            $data[] = [
+                'kelas'    => $item->kelas->nama,
+                'hari'     => $item->waktu->hari,
+                'jam_ke'   => $item->waktu->jam_ke,
+                'mapel'    => $item->mapel->kode_mapel ?? $item->mapel->mapel,
+                'ruangan'  => $item->ruangan->nama,
+            ];
+        }
+
+        return $data;
     }
 
     public function headings(): array
     {
-        return ['Hari', 'Jam ke', 'Kelas', 'Mapel', 'Ruangan'];
+        return ['Kelas', 'Hari', 'Jam ke-', 'Mapel', 'Ruangan'];
     }
 
-    public function map($row): array
+    public function title(): string
     {
-        return [
-            $row->waktu->hari,
-            $row->waktu->jam_ke,
-            $row->kelas->nama,
-            $row->mapel->mapel,
-            $row->ruangan->nama,
-        ];
+        return 'Jadwal Guru ' . $this->guru->nama;
     }
+
 }

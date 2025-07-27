@@ -6,18 +6,18 @@
             <div class="col-md-12 grid-margin">
               <div class="row">
                 <div class="col-12 col-xl-8 mb-4 mb-xl-0">
-                  <h3>Welcome {{ auth()->user()->name }}</h3>
+                  <h3>Selamat Datang {{ auth()->user()->name }}</h3>
 
-                    @role('admin')
-                        <p>Anda login sebagai <strong>Admin</strong></p>
+                    {{-- @role('admin')
+                        <p>Anda login sebagai <strong>Admin</strong></p> --}}
                         {{-- Tampilkan data khusus admin --}}
-                    @endrole
+                    {{-- @endrole --}}
 
                     @role('kurikulum')
                         <p>Anda login sebagai <strong>Kurikulum</strong></p>
                         {{-- Tampilkan data khusus kurikulum --}}
                     @endrole
-                  <h6 class="font-weight-normal mb-0">Sistem Penjadwalan Mata Pelajaran SMPN 1 Genteng <span class="text-primary">TA 2025/2026</span></h6>
+                  <h6 class="font-weight-normal mb-0">Sistem Penjadwalan Mata Pelajaran SMPN 1 Genteng <span class="text-primary">TP 2025/2026</span></h6>
                 </div>
                 <div class="col-12 col-xl-4">
                  <div class="justify-content-end d-flex">

@@ -138,6 +138,7 @@ Route::middleware(['auth', 'kurikulum'])->group(function () {
         Route::get('/evaluasi', [App\Http\Controllers\JadwalController::class, 'evaluasi'])->name('evaluasi');
         Route::get('/export/pdf/kelas/{id}', [JadwalController::class, 'exportPDFKelas'])->name('exportPDFKelas');
         Route::get('/export/pdf/guru/{id}', [JadwalController::class, 'exportPDFGuru'])->name('exportPDFGuru');
+        Route::get('/export/pdf', [JadwalController::class, 'exportAllPDF'])->name('exportAllPDF');
         Route::get('/export/excel/kelas/{id}', [JadwalController::class, 'exportExcelKelas'])->name('exportExcelKelas');
         Route::get('/export/excel/guru/{id}', [JadwalController::class, 'exportExcelGuru'])->name('exportExcelGuru');
     });
