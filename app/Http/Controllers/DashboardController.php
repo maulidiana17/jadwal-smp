@@ -56,7 +56,7 @@ class DashboardController extends Controller
 
         // Rekap Presensi
         $rekappresensi = DB::table('absensi')
-            ->selectRaw('COUNT(nis) as jmlhadir, SUM(IF(jam_masuk > "07:45",1,0)) as jmlterlambat')
+            ->selectRaw('COUNT(nis) as jmlhadir, SUM(IF(jam_masuk > "14:00",1,0)) as jmlterlambat')
             ->where('nis', $nis)
             ->whereMonth('tgl_absen', $bulanini)
             ->whereYear('tgl_absen', $tahunini)
@@ -81,7 +81,7 @@ class DashboardController extends Controller
 
         // Batas jam sekolah
         $jamAwalSekolah = strtotime('05:00');
-        $jamAkhirSekolah = strtotime('08:00');
+        $jamAkhirSekolah = strtotime('22:00');
 
         // Ambil ID kelas berdasarkan nama kelas
         $kelas = DB::table('kelas')
@@ -138,7 +138,7 @@ class DashboardController extends Controller
 
         // Rekap Hadir dan Terlambat
         $rekappresensi = DB::table('absensi')
-            ->selectRaw('COUNT(nis) as jmlhadir, SUM(IF(jam_masuk > "07:45",1,0)) as jmlterlambat')
+            ->selectRaw('COUNT(nis) as jmlhadir, SUM(IF(jam_masuk > "14:00",1,0)) as jmlterlambat')
             ->where('tgl_absen', $hariini)
             ->first();
 
@@ -162,7 +162,7 @@ class DashboardController extends Controller
             ->join('siswa', 'absensi.nis', '=', 'siswa.nis')
             ->select('siswa.nis', 'siswa.nama_lengkap', 'absensi.jam_masuk')
             ->where('tgl_absen', $hariini)
-            ->where('jam_masuk', '>', '07:45')
+            ->where('jam_masuk', '>', '14:00')
             ->get();
 
 
@@ -207,10 +207,10 @@ class DashboardController extends Controller
         $orderQuery = "
             FIELD(
                 CASE
-                    WHEN absensi.jam_masuk IS NOT NULL AND absensi.jam_masuk > '07:45' THEN 'Terlambat'
+                    WHEN absensi.jam_masuk IS NOT NULL AND absensi.jam_masuk > '14:00' THEN 'Terlambat'
                     WHEN pengajuan_izin.status = 'i' THEN 'Izin'
                     WHEN pengajuan_izin.status = 's' THEN 'Sakit'
-                    WHEN absensi.jam_masuk IS NOT NULL AND absensi.jam_masuk <= '07:45' THEN 'Hadir'
+                    WHEN absensi.jam_masuk IS NOT NULL AND absensi.jam_masuk <= '14:00' THEN 'Hadir'
                     ELSE 'Belum Hadir'
                 END,
                 'Terlambat', 'Izin', 'Sakit', 'Hadir', 'Belum Hadir'
@@ -225,8 +225,8 @@ class DashboardController extends Controller
                 DB::raw(
                     '
                 CASE
-                    WHEN absensi.jam_masuk IS NOT NULL AND absensi.jam_masuk <= "07:45" THEN "Hadir"
-                    WHEN absensi.jam_masuk IS NOT NULL AND absensi.jam_masuk > "07:45" THEN "Terlambat"
+                    WHEN absensi.jam_masuk IS NOT NULL AND absensi.jam_masuk <= "14:00" THEN "Hadir"
+                    WHEN absensi.jam_masuk IS NOT NULL AND absensi.jam_masuk > "14:00" THEN "Terlambat"
                     WHEN pengajuan_izin.status = "i" THEN "Izin"
                     WHEN pengajuan_izin.status = "s" THEN "Sakit"
                     ELSE "Belum Hadir"

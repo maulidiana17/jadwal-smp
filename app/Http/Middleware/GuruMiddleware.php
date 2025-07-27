@@ -19,6 +19,6 @@ class GuruMiddleware
             return $next($request);
         }
 
-        abort(403, 'Akses hanya untuk guru.');
+        abort(403, 'Akses hanya untuk guruu.');
     }
 }
