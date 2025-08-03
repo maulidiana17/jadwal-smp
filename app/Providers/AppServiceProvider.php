@@ -26,8 +26,13 @@ class AppServiceProvider extends ServiceProvider
         if (app()->isProduction()) {
             URL::forceRootUrl(config('app.url'));
             URL::forceScheme('https');
+            $this->app['request']->server->set('HTTPS', 'on');
 
         }
+
+        Paginator::currentPathResolver(function () {
+            return $this->app['url']->current();
+        });
 
         // Set default timezone
         Config::set('app.timezone', 'Asia/Jakarta');

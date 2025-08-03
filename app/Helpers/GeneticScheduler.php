@@ -95,10 +95,78 @@ class GeneticScheduler
     }
 
     // Membuat populasi awal
+    // protected function initialPopulation()
+    // {
+    //     $pop = [];
+    //     $groupedWaktu = $this->waktuList->groupBy('hari');
+
+    //     for ($i = 0; $i < $this->populationSize; $i++) {
+    //         $chrom = [];
+    //         $kelasList = collect($this->requirements)->pluck('kelas_id')->unique();
+
+    //         foreach ($kelasList as $kelasId) {
+    //             $kelasReqs = collect($this->requirements)->where('kelas_id', $kelasId);
+    //             $availableReqs = $kelasReqs->shuffle();
+
+    //             foreach ($groupedWaktu as $hari => $waktus) {
+    //                 $slotCount = 0;
+
+    //                 // Aturan jumlah slot dan mapel per hari
+    //                 if ($hari === 'Senin') {
+    //                     $targetSlot = 6;
+    //                     $mapelMin = 2;
+    //                     $mapelMax = 3;
+    //                     $jamValid = $waktus->whereBetween('jam_ke', [3, 8]);
+    //                 } elseif (in_array($hari, ['Selasa', 'Rabu', 'Kamis'])) {
+    //                     $targetSlot = 8;
+    //                     $mapelMin = 2;
+    //                     $mapelMax = 4;
+    //                     $jamValid = $waktus->whereBetween('jam_ke', [1, 8]);
+    //                 } elseif ($hari === 'Jumat') {
+    //                     $targetSlot = 5;
+    //                     $mapelMin = $mapelMax = 2;
+    //                     $jamValid = $waktus->whereBetween('jam_ke', [1, 5]);
+    //                 } elseif ($hari === 'Sabtu') {
+    //                     $targetSlot = 5;
+    //                     $mapelMin = $mapelMax = 1;
+    //                     $jamValid = $waktus->whereBetween('jam_ke', [1, 5]);
+    //                 } else {
+    //                     continue;
+    //                 }
+
+    //                 $jamValidIds = $jamValid->pluck('id')->shuffle()->take($targetSlot);
+    //                 $mapelDipakai = $availableReqs->take($mapelMax)->shuffle()->take(rand($mapelMin, $mapelMax));
+    //                 $mapelList = $hari === 'Sabtu' ? $mapelDipakai->take(1) : $mapelDipakai;
+
+    //                 // Alokasikan mapel ke waktu
+    //                 $slotIdx = 0;
+    //                 foreach ($mapelList as $req) {
+    //                     $jamPerMapel = floor($targetSlot / $mapelList->count());
+    //                     for ($j = 0; $j < $jamPerMapel && $slotIdx < count($jamValidIds); $j++) {
+    //                         $chrom[] = [
+    //                             'kelas_id'   => $kelasId,
+    //                             'mapel_id'   => $req['mapel_id'],
+    //                             'guru_id'    => $req['guru_options'][array_rand($req['guru_options'])],
+    //                             'waktu_id'   => $jamValidIds[$slotIdx],
+    //                             'ruangan_id' => $this->assignRuangan($req, $kelasId)
+    //                         ];
+    //                         $slotIdx++;
+    //                     }
+    //                 }
+    //             }
+    //         }
+
+    //         $pop[] = $chrom;
+    //     }
+
+    //     return $pop;
+    // }
+
     protected function initialPopulation()
     {
         $pop = [];
         $groupedWaktu = $this->waktuList->groupBy('hari');
+        $totalGen = 0;
 
         for ($i = 0; $i < $this->populationSize; $i++) {
             $chrom = [];
@@ -111,7 +179,6 @@ class GeneticScheduler
                 foreach ($groupedWaktu as $hari => $waktus) {
                     $slotCount = 0;
 
-                    // Aturan jumlah slot dan mapel per hari
                     if ($hari === 'Senin') {
                         $targetSlot = 6;
                         $mapelMin = 2;
@@ -138,7 +205,6 @@ class GeneticScheduler
                     $mapelDipakai = $availableReqs->take($mapelMax)->shuffle()->take(rand($mapelMin, $mapelMax));
                     $mapelList = $hari === 'Sabtu' ? $mapelDipakai->take(1) : $mapelDipakai;
 
-                    // Alokasikan mapel ke waktu
                     $slotIdx = 0;
                     foreach ($mapelList as $req) {
                         $jamPerMapel = floor($targetSlot / $mapelList->count());
@@ -156,11 +222,17 @@ class GeneticScheduler
                 }
             }
 
+            $totalGen += count($chrom);
+            Log::info("🧬 Kromosom ke-$i jumlah gen: " . count($chrom));
             $pop[] = $chrom;
         }
 
+        $rataRata = $this->populationSize > 0 ? ($totalGen / $this->populationSize) : 0;
+        Log::info("📊 Rata-rata gen per kromosom: $rataRata");
+
         return $pop;
     }
+
 
     // Mutasi kromosom
     protected function mutate(array $chrom): array
@@ -185,64 +257,97 @@ class GeneticScheduler
     }
 
     // Fungsi evaluasi kualitas solusi
+    // protected function fitness($chrom)
+    // {
+    //     $score = 0;
+
+    //     $byHariKelas = collect($chrom)->groupBy(fn($g) => $this->hariCache[$g['waktu_id']] . '-' . $g['kelas_id']);
+
+    //     foreach ($byHariKelas as $hariKelas => $genes) {
+    //         [$hari, $kelasId] = explode('-', $hariKelas);
+    //         $jamKeList = $genes->pluck('waktu_id')->map(fn($id) => $this->waktuCache[$id])->unique()->sort()->values();
+    //         $mapelList = $genes->pluck('mapel_id')->unique();
+
+    //         $countSlot = $jamKeList->count();
+    //         $countMapel = $mapelList->count();
+
+    //         // Mulai dari nilai dasar tiap hari valid
+    //         $baseScore = 0;
+    //         $valid = false;
+
+    //         if ($hari === 'Senin') {
+    //             $valid = $countSlot == 6 && $countMapel >= 2 && $countMapel <= 3 && $jamKeList->min() >= 3 && $jamKeList->max() <= 8;
+    //             $baseScore = 1000;
+    //         } elseif (in_array($hari, ['Selasa', 'Rabu', 'Kamis'])) {
+    //             $valid = $countSlot == 8 && $countMapel <= 4 && $jamKeList->min() >= 1 && $jamKeList->max() <= 8;
+    //             $baseScore = 1200;
+    //         } elseif ($hari === 'Jumat') {
+    //             $valid = $countSlot == 5 && $countMapel == 2 && $jamKeList->min() >= 1 && $jamKeList->max() <= 5;
+    //             $baseScore = 800;
+    //         } elseif ($hari === 'Sabtu') {
+    //             $valid = $countSlot == 5 && $countMapel == 1 && $genes->every(fn($g) => $g['mapel_id'] == $mapelList->first());
+    //             $baseScore = 700;
+    //         }
+
+    //         if ($valid) {
+    //             // Tambahkan skor jika valid
+    //             $score += $baseScore;
+
+    //             // Bonus jika jam berurutan (tidak lompat-lompat)
+    //             $isSequential = true;
+    //             for ($i = 1; $i < $jamKeList->count(); $i++) {
+    //                 if ($jamKeList[$i] != $jamKeList[$i - 1] + 1) {
+    //                     $isSequential = false;
+    //                     break;
+    //                 }
+    //             }
+    //             if ($isSequential) $score += 200;
+
+    //             // Bonus jika mapel tidak diulang-ulang dalam hari itu
+    //             if ($countMapel == $genes->count()) {
+    //                 $score += 100;
+    //             }
+    //         } else {
+    //             // Penalti berat jika tidak valid
+    //             $score -= 1000;
+    //         }
+    //     }
+
+    //     return max($score, 0); // Pastikan tidak negatif
+    // }
+
     protected function fitness($chrom)
     {
-        $score = 0;
+        $KG = 0; // Konflik Guru
+        $KR = 0; // Konflik Ruangan
+        $KW = 0; // Konflik Waktu (kelas)
 
-        $byHariKelas = collect($chrom)->groupBy(fn($g) => $this->hariCache[$g['waktu_id']] . '-' . $g['kelas_id']);
+        $byWaktu = collect($chrom)->groupBy('waktu_id');
 
-        foreach ($byHariKelas as $hariKelas => $genes) {
-            [$hari, $kelasId] = explode('-', $hariKelas);
-            $jamKeList = $genes->pluck('waktu_id')->map(fn($id) => $this->waktuCache[$id])->unique()->sort()->values();
-            $mapelList = $genes->pluck('mapel_id')->unique();
+        foreach ($byWaktu as $waktuId => $items) {
+            $guruCounter = [];
+            $ruangCounter = [];
+            $kelasCounter = [];
 
-            $countSlot = $jamKeList->count();
-            $countMapel = $mapelList->count();
-
-            // Mulai dari nilai dasar tiap hari valid
-            $baseScore = 0;
-            $valid = false;
-
-            if ($hari === 'Senin') {
-                $valid = $countSlot == 6 && $countMapel >= 2 && $countMapel <= 3 && $jamKeList->min() >= 3 && $jamKeList->max() <= 8;
-                $baseScore = 1000;
-            } elseif (in_array($hari, ['Selasa', 'Rabu', 'Kamis'])) {
-                $valid = $countSlot == 8 && $countMapel <= 4 && $jamKeList->min() >= 1 && $jamKeList->max() <= 8;
-                $baseScore = 1200;
-            } elseif ($hari === 'Jumat') {
-                $valid = $countSlot == 5 && $countMapel == 2 && $jamKeList->min() >= 1 && $jamKeList->max() <= 5;
-                $baseScore = 800;
-            } elseif ($hari === 'Sabtu') {
-                $valid = $countSlot == 5 && $countMapel == 1 && $genes->every(fn($g) => $g['mapel_id'] == $mapelList->first());
-                $baseScore = 700;
+            foreach ($items as $g) {
+                $guruCounter[$g['guru_id']] = ($guruCounter[$g['guru_id']] ?? 0) + 1;
+                $ruangCounter[$g['ruangan_id']] = ($ruangCounter[$g['ruangan_id']] ?? 0) + 1;
+                $kelasCounter[$g['kelas_id']] = ($kelasCounter[$g['kelas_id']] ?? 0) + 1;
             }
 
-            if ($valid) {
-                // Tambahkan skor jika valid
-                $score += $baseScore;
-
-                // Bonus jika jam berurutan (tidak lompat-lompat)
-                $isSequential = true;
-                for ($i = 1; $i < $jamKeList->count(); $i++) {
-                    if ($jamKeList[$i] != $jamKeList[$i - 1] + 1) {
-                        $isSequential = false;
-                        break;
-                    }
-                }
-                if ($isSequential) $score += 200;
-
-                // Bonus jika mapel tidak diulang-ulang dalam hari itu
-                if ($countMapel == $genes->count()) {
-                    $score += 100;
-                }
-            } else {
-                // Penalti berat jika tidak valid
-                $score -= 1000;
-            }
+            // Hitung konflik: lebih dari satu entri untuk guru/ruang/kelas di waktu yang sama
+            $KG += collect($guruCounter)->filter(fn($c) => $c > 1)->count();
+            $KR += collect($ruangCounter)->filter(fn($c) => $c > 1)->count();
+            $KW += collect($kelasCounter)->filter(fn($c) => $c > 1)->count();
         }
 
-        return max($score, 0); // Pastikan tidak negatif
+        $totalPenalty = $KG + $KR + $KW;
+
+        // F = 1 / (1 + total penalty)
+        return 1 / (1 + $totalPenalty);
     }
+
+
 
     // Crossover menggunakan beberapa parent
     protected function crossoverMulti(array $pop): array
