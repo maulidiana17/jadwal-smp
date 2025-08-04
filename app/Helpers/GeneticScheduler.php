@@ -162,10 +162,80 @@ class GeneticScheduler
     //     return $pop;
     // }
 
+    // protected function initialPopulation()
+    // {
+    //     $pop = [];
+    //     $groupedWaktu = $this->waktuList->groupBy('hari');
+    //     $totalGen = 0;
+
+    //     for ($i = 0; $i < $this->populationSize; $i++) {
+    //         $chrom = [];
+    //         $kelasList = collect($this->requirements)->pluck('kelas_id')->unique();
+
+    //         foreach ($kelasList as $kelasId) {
+    //             $kelasReqs = collect($this->requirements)->where('kelas_id', $kelasId);
+    //             $availableReqs = $kelasReqs->shuffle();
+
+    //             foreach ($groupedWaktu as $hari => $waktus) {
+    //                 $slotCount = 0;
+
+    //                 if ($hari === 'Senin') {
+    //                     $targetSlot = 6;
+    //                     $mapelMin = 2;
+    //                     $mapelMax = 3;
+    //                     $jamValid = $waktus->whereBetween('jam_ke', [3, 8]);
+    //                 } elseif (in_array($hari, ['Selasa', 'Rabu', 'Kamis'])) {
+    //                     $targetSlot = 8;
+    //                     $mapelMin = 2;
+    //                     $mapelMax = 4;
+    //                     $jamValid = $waktus->whereBetween('jam_ke', [1, 8]);
+    //                 } elseif ($hari === 'Jumat') {
+    //                     $targetSlot = 5;
+    //                     $mapelMin = $mapelMax = 2;
+    //                     $jamValid = $waktus->whereBetween('jam_ke', [1, 5]);
+    //                 } elseif ($hari === 'Sabtu') {
+    //                     $targetSlot = 5;
+    //                     $mapelMin = $mapelMax = 1;
+    //                     $jamValid = $waktus->whereBetween('jam_ke', [1, 5]);
+    //                 } else {
+    //                     continue;
+    //                 }
+
+    //                 $jamValidIds = $jamValid->pluck('id')->shuffle()->take($targetSlot);
+    //                 $mapelDipakai = $availableReqs->take($mapelMax)->shuffle()->take(rand($mapelMin, $mapelMax));
+    //                 $mapelList = $hari === 'Sabtu' ? $mapelDipakai->take(1) : $mapelDipakai;
+
+    //                 $slotIdx = 0;
+    //                 foreach ($mapelList as $req) {
+    //                     $jamPerMapel = floor($targetSlot / $mapelList->count());
+    //                     for ($j = 0; $j < $jamPerMapel && $slotIdx < count($jamValidIds); $j++) {
+    //                         $chrom[] = [
+    //                             'kelas_id'   => $kelasId,
+    //                             'mapel_id'   => $req['mapel_id'],
+    //                             'guru_id'    => $req['guru_options'][array_rand($req['guru_options'])],
+    //                             'waktu_id'   => $jamValidIds[$slotIdx],
+    //                             'ruangan_id' => $this->assignRuangan($req, $kelasId)
+    //                         ];
+    //                         $slotIdx++;
+    //                     }
+    //                 }
+    //             }
+    //         }
+
+    //         $totalGen += count($chrom);
+    //         Log::info("🧬 Kromosom ke-$i jumlah gen: " . count($chrom));
+    //         $pop[] = $chrom;
+    //     }
+
+    //     $rataRata = $this->populationSize > 0 ? ($totalGen / $this->populationSize) : 0;
+    //     Log::info("📊 Rata-rata gen per kromosom: $rataRata");
+
+    //     return $pop;
+    // }
+
     protected function initialPopulation()
     {
         $pop = [];
-        $groupedWaktu = $this->waktuList->groupBy('hari');
         $totalGen = 0;
 
         for ($i = 0; $i < $this->populationSize; $i++) {
@@ -174,50 +244,24 @@ class GeneticScheduler
 
             foreach ($kelasList as $kelasId) {
                 $kelasReqs = collect($this->requirements)->where('kelas_id', $kelasId);
-                $availableReqs = $kelasReqs->shuffle();
 
-                foreach ($groupedWaktu as $hari => $waktus) {
-                    $slotCount = 0;
+                // Acak semua waktu yang tersedia untuk kelas ini
+                $availableWaktu = $this->waktuList->pluck('id')->shuffle();
 
-                    if ($hari === 'Senin') {
-                        $targetSlot = 6;
-                        $mapelMin = 2;
-                        $mapelMax = 3;
-                        $jamValid = $waktus->whereBetween('jam_ke', [3, 8]);
-                    } elseif (in_array($hari, ['Selasa', 'Rabu', 'Kamis'])) {
-                        $targetSlot = 8;
-                        $mapelMin = 2;
-                        $mapelMax = 4;
-                        $jamValid = $waktus->whereBetween('jam_ke', [1, 8]);
-                    } elseif ($hari === 'Jumat') {
-                        $targetSlot = 5;
-                        $mapelMin = $mapelMax = 2;
-                        $jamValid = $waktus->whereBetween('jam_ke', [1, 5]);
-                    } elseif ($hari === 'Sabtu') {
-                        $targetSlot = 5;
-                        $mapelMin = $mapelMax = 1;
-                        $jamValid = $waktus->whereBetween('jam_ke', [1, 5]);
-                    } else {
-                        continue;
-                    }
+                foreach ($kelasReqs as $req) {
+                    $mapelId = $req['mapel_id'];
+                    $jumlahJam = $req['jumlah_jam'] ?? 2;
 
-                    $jamValidIds = $jamValid->pluck('id')->shuffle()->take($targetSlot);
-                    $mapelDipakai = $availableReqs->take($mapelMax)->shuffle()->take(rand($mapelMin, $mapelMax));
-                    $mapelList = $hari === 'Sabtu' ? $mapelDipakai->take(1) : $mapelDipakai;
+                    for ($j = 0; $j < $jumlahJam && !$availableWaktu->isEmpty(); $j++) {
+                        $waktuId = $availableWaktu->pop();
 
-                    $slotIdx = 0;
-                    foreach ($mapelList as $req) {
-                        $jamPerMapel = floor($targetSlot / $mapelList->count());
-                        for ($j = 0; $j < $jamPerMapel && $slotIdx < count($jamValidIds); $j++) {
-                            $chrom[] = [
-                                'kelas_id'   => $kelasId,
-                                'mapel_id'   => $req['mapel_id'],
-                                'guru_id'    => $req['guru_options'][array_rand($req['guru_options'])],
-                                'waktu_id'   => $jamValidIds[$slotIdx],
-                                'ruangan_id' => $this->assignRuangan($req, $kelasId)
-                            ];
-                            $slotIdx++;
-                        }
+                        $chrom[] = [
+                            'kelas_id'   => $kelasId,
+                            'mapel_id'   => $mapelId,
+                            'guru_id'    => $req['guru_options'][array_rand($req['guru_options'])],
+                            'waktu_id'   => $waktuId,
+                            'ruangan_id' => $this->assignRuangan($req, $kelasId),
+                        ];
                     }
                 }
             }
@@ -227,11 +271,13 @@ class GeneticScheduler
             $pop[] = $chrom;
         }
 
-        $rataRata = $this->populationSize > 0 ? ($totalGen / $this->populationSize) : 0;
-        Log::info("📊 Rata-rata gen per kromosom: $rataRata");
+        Log::info("✅ Jumlah kromosom yang terbentuk: " . count($pop));
+        Log::info("📊 Total gen: $totalGen | Rata-rata gen per kromosom: " . ($totalGen / max(count($pop), 1)));
 
         return $pop;
     }
+
+
 
 
     // Mutasi kromosom

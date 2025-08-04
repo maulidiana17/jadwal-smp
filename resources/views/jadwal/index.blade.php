@@ -149,7 +149,7 @@
                             <tr>
                                 <th>Hari</th>
                                 <th>Jam</th>
-                                <th>Mapel</th>
+                                <th>Mata Pelajaran</th>
                                 <th>Guru</th>
                                 <th>Ruangan</th>
                             </tr>

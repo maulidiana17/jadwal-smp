@@ -97,12 +97,20 @@ class JadwalController extends Controller
         $total = $jadwals->count();
     
         // Total ideal berdasarkan semua jam_per_minggu
-        $requirements = \App\Models\Pengampu::with('mapel')->get();
-        $expectedTotal = $requirements->sum(fn($p) => $p->mapel->jam_per_minggu ?? 0);
-    
+        $pengampus = \App\Models\Pengampu::with('mapel')->get();
+        $expectedTotal = $pengampus
+            ->filter(fn($p) => $p->mapel && $p->mapel->jam_per_minggu)
+            ->sum(fn($p) => $p->mapel->jam_per_minggu);
+
+        // Hitung skipped dengan aman (tidak negatif)
+        $skipped = max(0, $expectedTotal - $total);
+
         // Deteksi konflik (guru, kelas, ruangan bentrok di waktu yang sama)
         $conflicts = [];
-    
+        $conflictGuru = 0;
+        $conflictKelas = 0;
+        $conflictRuangan = 0;
+            
         foreach ($jadwals as $i => $a) {
             foreach ($jadwals as $j => $b) {
                 if ($i >= $j) continue; // Hindari duplikat dan diri sendiri
@@ -124,6 +132,7 @@ class JadwalController extends Controller
                         'kelas_a' => $a->kelas->nama ?? 'Kelas A ID: ' . $a->kelas_id,
                         'kelas_b' => $b->kelas->nama ?? 'Kelas B ID: ' . $b->kelas_id,
                     ];
+                    $conflictGuru++;
                 }
     
                 // Cek konflik kelas
@@ -135,6 +144,7 @@ class JadwalController extends Controller
                         'mapel_a' => $a->mapel->nama ?? 'Mapel A ID: ' . $a->mapel_id,
                         'mapel_b' => $b->mapel->nama ?? 'Mapel B ID: ' . $b->mapel_id,
                     ];
+                    $conflictKelas++;
                 }
     
                 // Cek konflik ruangan
@@ -146,6 +156,7 @@ class JadwalController extends Controller
                         'kelas_a' => $a->kelas->nama ?? 'Kelas A ID: ' . $a->kelas_id,
                         'kelas_b' => $b->kelas->nama ?? 'Kelas B ID: ' . $b->kelas_id,
                     ];
+                    $conflictRuangan++;
                 }
             }
         }
@@ -164,11 +175,14 @@ class JadwalController extends Controller
         return view('jadwal.evaluasi', [
             'total' => $total,
             'expected' => $expectedTotal,
-            'skipped' => $expectedTotal - $total,
+            'skipped' => $skipped,
             'fitness' => $fitness,
             'conflicts' => $conflicts,
             'conflictCount' => $conflictCount,
             'nonConflictCount' => $nonConflictCount,
+            'conflictGuru' => $conflictGuru,
+            'conflictKelas' => $conflictKelas,
+            'conflictRuangan' => $conflictRuangan,
         ]);
     }
 
