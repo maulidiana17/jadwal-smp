@@ -173,57 +173,15 @@ class PengampuController extends Controller
 
         return back()->with('success', 'Semua kelas pengampu untuk guru & mapel ini telah dihapus.');
     }
-    // public function create()
-    // {
-    //     $guru = Guru::all();
-    //     $mapel = Mapel::all();
-    //     $kelas = Kelas::all();
-    //     return view('pengampu.create', compact('guru', 'mapel','kelas'));
-    // }
-
-    // public function store(Request $request)
-    // {
-    //     $request->validate([
-    //         'guru_id' => 'required|exists:guru,id',
-    //         'mapel_id' => 'required|exists:mapel,id',
-    //         'kelas_id' => 'required|exists:kelas,id',
-    //     ]);
-
-    //     Pengampu::create($request->all());
-    //     return redirect()->route('pengampu.index')->with('success', 'Data pengampu berhasil disimpan.');
-    // }
-
-    // public function edit($id)
-    // {
-    //     $pengampu = Pengampu::findOrFail($id);
-    //     $guru = Guru::all();
-    //     $mapel = Mapel::all();
-    //     $kelas = Kelas::all();
-    //     return view('pengampu.edit', compact('pengampu', 'guru', 'mapel','kelas'));
-    // }
-
-    // public function update(Request $request, $id)
-    // {
-    //     $request->validate([
-    //         'guru_id' => 'required|exists:guru,id',
-    //         'mapel_id' => 'required|exists:mapel,id',
-    //         'kelas_id' => 'required|exists:kelas,id',
-    //     ]);
-
-    //     $pengampu = Pengampu::findOrFail($id);
-    //     $pengampu->update($request->all());
-
-    //     return redirect()->route('pengampu.index')->with('success', 'Data pengampu berhasil diperbarui.');
-    // }
-
-    // public function destroy($id)
-    // {
-    //     $pengampu = Pengampu::findOrFail($id);
-    //     $pengampu->delete();
-
-    //     return redirect()->route('pengampu.index')->with('success', 'Data pengampu berhasil dihapus.');
-    // }
-
+    public function reset()
+    {
+        try {
+            \App\Models\Pengampu::truncate();
+            return redirect()->route('pengampu.index')->with('success', 'Seluruh data pengampu berhasil direset.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal mereset data: ' . $e->getMessage());
+        }
+    }
     public function import(Request $request)
     {
         $request->validate([

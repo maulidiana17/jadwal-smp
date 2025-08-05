@@ -83,6 +83,16 @@ class GuruController extends Controller
         return redirect()->route('guru.index')->with('success', 'Guru berhasil dihapus.');
     }
 
+    public function reset()
+    {
+        try {
+            \App\Models\Guru::truncate();
+            return redirect()->route('guru.index')->with('success', 'Seluruh data guru berhasil direset.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal mereset data: ' . $e->getMessage());
+        }
+    }
+
     public function import(Request $request)
     {
         $request->validate([

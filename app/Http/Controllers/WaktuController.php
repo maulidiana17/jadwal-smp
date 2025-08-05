@@ -68,6 +68,16 @@ class WaktuController extends Controller
         return redirect()->route('waktu.index')->with('success', 'Waktu berhasil dihapus.');
     }
 
+    public function reset()
+    {
+        try {
+            \App\Models\Waktu::truncate();
+            return redirect()->route('waktu.index')->with('success', 'Seluruh data waktu berhasil direset.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal mereset data: ' . $e->getMessage());
+        }
+    }
+
     public function import(Request $request)
     {
         $request->validate([

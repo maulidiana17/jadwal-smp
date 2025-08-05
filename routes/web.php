@@ -65,6 +65,7 @@ Route::middleware(['auth', 'role:admin|kurikulum'])->group(function () {
         Route::get('/edit/{id}', [GuruController::class, 'edit'])->name('edit');
         Route::put('/update/{id}', [GuruController::class, 'update'])->name('update');
         Route::delete('/delete/{id}', [GuruController::class, 'delete'])->name('delete');
+        Route::delete('/reset', [GuruController::class, 'reset'])->name('reset');
         Route::post('/import', [GuruController::class, 'import'])->name('import');
     });
 
@@ -76,6 +77,7 @@ Route::middleware(['auth', 'role:admin|kurikulum'])->group(function () {
         Route::get('/edit/{id}', [MapelController::class, 'edit'])->name('edit');
         Route::put('/update/{id}', [MapelController::class, 'update'])->name('update');
         Route::delete('/delete/{id}', [MapelController::class, 'delete'])->name('delete');
+        Route::delete('/reset', [MapelController::class, 'reset'])->name('reset');
         Route::post('/import', [MapelController::class, 'import'])->name('import');
     });
 
@@ -87,6 +89,7 @@ Route::middleware(['auth', 'role:admin|kurikulum'])->group(function () {
         Route::get('/edit/{id}', [KelasController::class, 'edit'])->name('edit');
         Route::put('/update/{id}', [KelasController::class, 'update'])->name('update');
         Route::delete('/delete/{id}', [KelasController::class, 'delete'])->name('delete');
+        Route::delete('/reset', [KelasController::class, 'reset'])->name('reset');
         Route::post('/import', [KelasController::class, 'import'])->name('import');
     });
 
@@ -98,6 +101,7 @@ Route::middleware(['auth', 'role:admin|kurikulum'])->group(function () {
         Route::get('/edit/{id}', [RuanganController::class, 'edit'])->name('edit');
         Route::put('/update/{id}', [RuanganController::class, 'update'])->name('update');
         Route::delete('/delete/{id}', [RuanganController::class, 'delete'])->name('delete');
+        Route::delete('/reset', [RuanganController::class, 'reset'])->name('reset');
         Route::post('/import', [RuanganController::class, 'import'])->name('import');
     });
 
@@ -109,6 +113,7 @@ Route::middleware(['auth', 'role:admin|kurikulum'])->group(function () {
         Route::get('/edit/{id}', [WaktuController::class, 'edit'])->name('edit');
         Route::put('/update/{id}', [WaktuController::class, 'update'])->name('update');
         Route::delete('/delete/{id}', [WaktuController::class, 'delete'])->name('delete');
+        Route::delete('/reset', [RuanganController::class, 'reset'])->name('reset');
         Route::post('/import', [WaktuController::class, 'import'])->name('import');
     });
 
@@ -120,6 +125,7 @@ Route::middleware(['auth', 'role:admin|kurikulum'])->group(function () {
         Route::get('/edit-multiple/{guru}/{mapel}', [PengampuController::class, 'editMultiple'])->name('editMultiple');
         Route::put('/update-multiple/{guru}/{mapel}', [PengampuController::class, 'updateMultiple'])->name('updateMultiple');
         Route::delete('/delete-group/{guru}/{mapel}', [PengampuController::class, 'destroyGroup'])->name('destroyGroup');
+        Route::delete('/reset', [PengampuController::class, 'reset'])->name('reset');
         Route::post('/import', [PengampuController::class, 'import'])->name('import');
     });
 

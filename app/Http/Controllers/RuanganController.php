@@ -66,6 +66,16 @@ class RuanganController extends Controller
         return redirect()->route('ruangan.index')->with('success', 'Ruangan berhasil dihapus.');
     }
 
+    public function reset()
+    {
+        try {
+            \App\Models\Ruangan::truncate();
+            return redirect()->route('ruangan.index')->with('success', 'Seluruh data ruangan berhasil direset.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal mereset data: ' . $e->getMessage());
+        }
+    }
+
     public function import(Request $request)
     {
         $request->validate([

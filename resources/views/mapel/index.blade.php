@@ -7,10 +7,12 @@
                 <div class="card-body">
                   <h4 class="card-title">Data Mata Pelajaran</h4>
                   <div class="d-flex justify-content-between mb-3 align-items-center">
-                  <a href="{{route('mapel.create')}}" class="btn btn-info">Tambah</a>
-                    <!-- Tombol trigger modal -->
-                  <a class="mdi mdi-file-excel text-success" data-toggle="modal" 
-                  data-target="#importModal">Impor Excel</a>
+                    <a href="{{route('mapel.create')}}" class="btn btn-info">Tambah</a>
+                      <div class="d-flex gap-2">
+                        <!-- Tombol trigger modal -->
+                        <a class="mdi mdi-file-excel text-success" data-toggle="modal" data-target="#importModal">Impor Excel</a>
+                        <a class="mdi mdi-delete-empty text-danger" data-toggle="modal" data-target="#modal-reset">Reset</a>
+                      </div>
                   </div>
 
                   <!-- Modal -->
@@ -103,6 +105,32 @@
                             </div>
                           </div>
                         </div>
+
+                        <!-- Modal Reset Semua -->
+                        <div class="modal fade" id="modal-reset" tabindex="-1" role="dialog" aria-labelledby="resetModalLabel" aria-hidden="true">
+                          <div class="modal-dialog" role="document">
+                            <form action="{{ route('mapel.reset') }}" method="POST">
+                              @csrf
+                              @method('DELETE')
+                              <div class="modal-content">
+                                <div class="modal-header">
+                                  <h5 class="modal-title" id="resetModalLabel">Konfirmasi Reset Semua Mapel</h5>
+                                  <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
+                                    <span aria-hidden="true">&times;</span>
+                                  </button>
+                                </div>
+                                <div class="modal-body">
+                                  <p>Apakah Anda yakin ingin menghapus <strong>seluruh data mata pelajaran</strong>? Tindakan ini tidak bisa dibatalkan.</p>
+                                </div>
+                                <div class="modal-footer">
+                                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                                  <button type="submit" class="btn btn-danger">Reset Semua</button>
+                                </div>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
+
                         @endforeach
                       </tbody>
                     </table>

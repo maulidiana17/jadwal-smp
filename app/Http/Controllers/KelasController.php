@@ -61,6 +61,16 @@ class KelasController extends Controller
         return redirect()->route('kelas.index')->with('success', 'kelas berhasil dihapus.');
     }
 
+    public function reset()
+    {
+        try {
+            \App\Models\Kelas::truncate();
+            return redirect()->route('kelas.index')->with('success', 'Seluruh data kelas berhasil direset.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal mereset data: ' . $e->getMessage());
+        }
+    }
+
     public function import(Request $request)
     {
         $request->validate([

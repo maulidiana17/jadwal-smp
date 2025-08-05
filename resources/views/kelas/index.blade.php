@@ -8,9 +8,11 @@
                   <h4 class="card-title">Data Kelas</h4>
                   <div class="d-flex justify-content-between mb-3 align-items-center">
                   <a href="{{route('kelas.create')}}" class="btn btn-info">Tambah</a>
-                    <!-- Tombol trigger modal -->
-                  <a class="mdi mdi-file-excel text-success" data-toggle="modal" 
-                  data-target="#importModal">Impor Excel</a>
+                      <div class="d-flex gap-2">
+                        <!-- Tombol trigger modal -->
+                        <a class="mdi mdi-file-excel text-success" data-toggle="modal" data-target="#importModal">Impor Excel</a>
+                        <a class="mdi mdi-delete-empty text-danger" data-toggle="modal" data-target="#modal-reset">Reset</a>
+                      </div>
                   </div>
                   @if (session('success'))
                     <div class="alert alert-success alert-dismissible fade show d-flex align-items-center" 
@@ -98,7 +100,37 @@
                             </div>
                           </div>
                         </div>
+
+                        <!-- Modal Reset Semua -->
+                        <div class="modal fade" id="modal-reset" tabindex="-1" role="dialog" aria-labelledby="resetModalLabel" aria-hidden="true">
+                          <div class="modal-dialog" role="document">
+                            <form action="{{ route('kelas.reset') }}" method="POST">
+                              @csrf
+                              @method('DELETE')
+                              <div class="modal-content">
+                                <div class="modal-header">
+                                  <h5 class="modal-title" id="resetModalLabel">Konfirmasi Reset Semua Kelas</h5>
+                                  <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
+                                    <span aria-hidden="true">&times;</span>
+                                  </button>
+                                </div>
+                                <div class="modal-body">
+                                  <p>Apakah Anda yakin ingin menghapus <strong>seluruh data kelas</strong>? Tindakan ini tidak bisa dibatalkan.</p>
+                                </div>
+                                <div class="modal-footer">
+                                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                                  <button type="submit" class="btn btn-danger">Reset Semua</button>
+                                </div>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
                         @endforeach
+                          @if ($kelasList->isEmpty())
+                              <tr>
+                                  <td colspan="5" class="text-center">Belum ada data kelas.</td>
+                              </tr>
+                          @endif
                       </tbody>
                     </table>
                   </div>
