@@ -126,11 +126,6 @@
                           </div>
                         </div>
                         @endforeach
-                          @if ($kelasList->isEmpty())
-                              <tr>
-                                  <td colspan="5" class="text-center">Belum ada data kelas.</td>
-                              </tr>
-                          @endif
                       </tbody>
                     </table>
                   </div>
