@@ -86,7 +86,7 @@ class GuruController extends Controller
     public function reset()
     {
         try {
-            \App\Models\Guru::truncate();
+            \App\Models\Guru::query()->delete();
             return redirect()->route('guru.index')->with('success', 'Seluruh data guru berhasil direset.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal mereset data: ' . $e->getMessage());

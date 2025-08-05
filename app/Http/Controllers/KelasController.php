@@ -64,7 +64,7 @@ class KelasController extends Controller
     public function reset()
     {
         try {
-            \App\Models\Kelas::truncate();
+            \App\Models\Kelas::query()->delete();
             return redirect()->route('kelas.index')->with('success', 'Seluruh data kelas berhasil direset.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal mereset data: ' . $e->getMessage());

@@ -71,7 +71,7 @@ class WaktuController extends Controller
     public function reset()
     {
         try {
-            \App\Models\Waktu::truncate();
+            \App\Models\Waktu::query()->delete();
             return redirect()->route('waktu.index')->with('success', 'Seluruh data waktu berhasil direset.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal mereset data: ' . $e->getMessage());

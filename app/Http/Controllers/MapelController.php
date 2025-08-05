@@ -68,7 +68,7 @@ class MapelController extends Controller
     public function reset()
     {
         try {
-            \App\Models\Mapel::truncate();
+            \App\Models\Mapel::query()->delete();
             return redirect()->route('mapel.index')->with('success', 'Seluruh data mata pelajaran berhasil direset.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal mereset data: ' . $e->getMessage());

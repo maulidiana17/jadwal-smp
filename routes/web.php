@@ -113,7 +113,7 @@ Route::middleware(['auth', 'role:admin|kurikulum'])->group(function () {
         Route::get('/edit/{id}', [WaktuController::class, 'edit'])->name('edit');
         Route::put('/update/{id}', [WaktuController::class, 'update'])->name('update');
         Route::delete('/delete/{id}', [WaktuController::class, 'delete'])->name('delete');
-        Route::delete('/reset', [RuanganController::class, 'reset'])->name('reset');
+        Route::delete('/reset', [WaktuController::class, 'reset'])->name('reset');
         Route::post('/import', [WaktuController::class, 'import'])->name('import');
     });
 
