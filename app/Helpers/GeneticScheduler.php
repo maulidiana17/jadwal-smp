@@ -3,199 +3,376 @@
 namespace App\Helpers;
 
 use App\Models\Kelas;
-use Illuminate\Support\Facades\DB;
+use App\Models\Waktu;
 use Illuminate\Support\Facades\Log;
 
 class GeneticScheduler
 {
-    // Properti utama yang digunakan untuk proses genetika
-    protected $requirements, $rooms, $waktuList;
+    protected $requirements, $rooms;
+    protected $waktuList;
     protected $populationSize, $crossoverRate, $mutationRate, $maxGenerations;
     protected $elitism = 2, $stagnationLimit = 30, $noChange = 0;
-    protected $mapelJamPerMinggu;
-    protected $maxGuruJam;
     protected $kelasToRuangan = [];
-    protected $waktuCache = [];
     protected $hariCache = [];
+    protected $hariRules = [];
 
-    // Konstruktor untuk inisialisasi data
-    public function __construct($requirements, $rooms, $waktuList, $popSize = 100, $crossRate = 0.8, $mutRate = 0.2, $gens = 200, $mapelJamPerMinggu = [], $maxGuruJam = 60)
+    public function __construct(
+        $requirements, $rooms, $waktus, $popSize = 100, $crossRate = 0.8, $mutRate = 0.2, $gens = 200)
     {
-        // Filter waktu yang hanya berjenis pelajaran dan urutkan berdasarkan hari dan jam
-        $this->waktuList = collect($waktuList)
-            ->filter(fn($w) => strtolower($w->ket) === 'pelajaran')
-            ->sortBy(fn($w) => [$w->hari, $w->jam_ke])
-            ->values();
-
         $this->requirements = $requirements;
         $this->rooms = collect($rooms);
-        $this->populationSize = $popSize;
+        $this->populationSize = (int)$popSize;
         $this->crossoverRate = $crossRate;
         $this->mutationRate = $mutRate;
         $this->maxGenerations = $gens;
-        $this->mapelJamPerMinggu = $mapelJamPerMinggu;
-        $this->maxGuruJam = $maxGuruJam;
 
-        // Petakan kelas ke ruangan
+        $this->waktuList = Waktu::where('ket', 'pelajaran')
+            ->orderBy('hari')->orderBy('jam_ke')->get()
+            ->map(fn($w) => [
+                'id' => $w->id,
+                'hari' => $w->hari,
+                'jam_ke' => $w->jam_ke,
+            ]);
+
+        // buat cache hari per waktu_id untuk scoring/distribusi
+        $this->hariCache = $this->waktuList->pluck('hari', 'id')->toArray();
+
         $this->mapKelasToRuangan();
 
-        // Cache waktu dan hari untuk mempercepat lookup
-        $this->waktuCache = $this->waktuList->pluck('jam_ke', 'id')->toArray();
-        $this->hariCache = $this->waktuList->pluck('hari', 'id')->toArray();
     }
 
-    // Fungsi utama untuk menjalankan algoritma genetika
-    public function run()
+    protected function mapKelasToRuangan()
     {
-        try {
-            $startTime = microtime(true);
-            $maxSeconds = 60;
-
-            $pop = $this->initialPopulation();
-            usort($pop, fn($a, $b) => $this->fitness($b) <=> $this->fitness($a));
-            $bestFit = $this->fitness($pop[0]);
-
-            for ($gen = 1; $gen <= $this->maxGenerations; $gen++) {
-                if ((microtime(true) - $startTime) > $maxSeconds) break;
-
-                $newPop = array_slice($pop, 0, $this->elitism);
-
-                while (count($newPop) < $this->populationSize) {
-                    $child = $this->crossoverMapelWise($pop);
-                    $child = $this->mutateAdvanced($child);
-                    $child = $this->resolveGuruConflicts($child);
-                    $child = $this->autoRepairConflicts($child);
-                    $newPop[] = $child;
-                }
-
-                $pop = $newPop;
-                usort($pop, fn($a, $b) => $this->fitness($b) <=> $this->fitness($a));
-                $curr = $this->fitness($pop[0]);
-                Log::info("Gen-$gen: Fitness={$curr}");
-
-                if ($curr <= $bestFit) {
-                    $this->noChange++;
-                    if ($this->noChange >= $this->stagnationLimit) break;
-                } else {
-                    $bestFit = $curr;
-                    $this->noChange = 0;
+        foreach ($this->rooms as $room) {
+            if (strtolower($room->tipe) === 'kelas') {
+                $kelas = Kelas::where('nama', $room->nama)->first();
+                if ($kelas) {
+                    $this->kelasToRuangan[$kelas->id] = $room->id;
                 }
             }
-            $this->fillRemainingJadwal($pop[0]);
-            $this->repairJadwalKurang($pop[0]);
-
-            return [
-                'jadwal' => $pop[0],
-                'fitness' => $bestFit
-            ];
-        } catch (\Exception $e) {
-            Log::error('GeneticScheduler error: ' . $e->getMessage());
-            throw $e;
         }
     }
 
-    // Membuat populasi awal
-    // protected function initialPopulation()
-    // {
-    //     $pop = [];
-    //     $totalGen = 0;
+    public function run()
+    {
+        $startTime = microtime(true);
+        $maxSeconds = 60;
 
-    //     for ($i = 0; $i < $this->populationSize; $i++) {
-    //         $chrom = [];
-    //         $kelasList = collect($this->requirements)->pluck('kelas_id')->unique();
+        $pop = $this->initialPopulation();
+        usort($pop, fn($a, $b) => $this->fitness($b) <=> $this->fitness($a));
+        $bestFit = $this->fitness($pop[0]);
 
-    //         foreach ($kelasList as $kelasId) {
-    //             $kelasReqs = collect($this->requirements)->where('kelas_id', $kelasId);
+        for ($gen = 1; $gen <= $this->maxGenerations; $gen++) {
+            if ((microtime(true) - $startTime) > $maxSeconds) break;
 
-    //             // Acak semua waktu yang tersedia untuk kelas ini
-    //             $availableWaktu = $this->waktuList->pluck('id')->shuffle();
+            $newPop = array_slice($pop, 0, $this->elitism);
 
-    //             foreach ($kelasReqs as $req) {
-    //                 $mapelId = $req['mapel_id'];
-    //                 $jumlahJam = $req['jumlah_jam'] ?? 2;
+            while (count($newPop) < $this->populationSize) {
+                $child = $this->crossoverMapelWise($pop);
+                $child = $this->mutateAdvanced($child);
+                $child = $this->repairAllConflicts($child);
+                $this->fillSlotsOptimized($child);
+                $newPop[] = $child;
+            }
 
-    //                 for ($j = 0; $j < $jumlahJam && !$availableWaktu->isEmpty(); $j++) {
-    //                     $waktuId = $availableWaktu->pop();
+            $pop = $newPop;
+            usort($pop, fn($a, $b) => $this->fitness($b) <=> $this->fitness($a));
+            $curr = $this->fitness($pop[0]);
 
-    //                     $chrom[] = [
-    //                         'kelas_id'   => $kelasId,
-    //                         'mapel_id'   => $mapelId,
-    //                         'guru_id'    => $req['guru_options'][array_rand($req['guru_options'])],
-    //                         'waktu_id'   => $waktuId,
-    //                         'ruangan_id' => $this->assignRuangan($req, $kelasId),
-    //                     ];
-    //                 }
-    //             }
-    //         }
+            Log::info("Gen-$gen: Fitness={$curr}");
 
-    //         $totalGen += count($chrom);
-    //         Log::info("🧬 Kromosom ke-$i jumlah gen: " . count($chrom));
-    //         $pop[] = $chrom;
-    //     }
+            if ($curr <= $bestFit) {
+                $this->noChange++;
+                if ($this->noChange >= $this->stagnationLimit) break;
+            } else {
+                $bestFit = $curr;
+                $this->noChange = 0;
+            }
+        }
 
-    //     Log::info("✅ Jumlah kromosom yang terbentuk: " . count($pop));
-    //     Log::info("📊 Total gen: $totalGen | Rata-rata gen per kromosom: " . ($totalGen / max(count($pop), 1)));
+        // ✅ Perbaiki kekosongan sebelum hasil akhir dikembalikan
+        $chrom = $pop[0];
+        $this->repairAllConflicts($chrom);
+        $this->fillSlotsOptimized($chrom);
 
-    //     return $pop;
-    // }
-protected function initialPopulation()
-{
-    $pop = [];
-    $totalGen = 0;
+        return [
+            'jadwal' => $chrom,
+            'fitness' => $this->fitness($chrom)
+        ];
+    }
 
-    for ($i = 0; $i < $this->populationSize; $i++) {
-        $chrom = [];
-        $kelasList = collect($this->requirements)->pluck('kelas_id')->unique();
-        $guruTerpakai = []; // [waktu_id => [guru_id]]
+    protected function initialPopulation()
+    {
+        $pop = [];
+        for ($i = 0; $i < $this->populationSize; $i++) {
+            $chrom = [];
+            $guruTerpakai = [];
 
-        foreach ($kelasList as $kelasId) {
-            $kelasReqs = collect($this->requirements)->where('kelas_id', $kelasId);
-            $availableWaktu = $this->waktuList->pluck('id')->shuffle();
+            $kelasList = collect($this->requirements)->pluck('kelas_id')->unique();
 
-            foreach ($kelasReqs as $req) {
-                $mapelId = $req['mapel_id'];
-                $jumlahJam = $req['jumlah_jam'] ?? 2;
+            foreach ($kelasList as $kelasId) {
+                $kelasReqs = collect($this->requirements)->where('kelas_id', $kelasId);
+                $availableWaktu = $this->waktuList->pluck('id')->shuffle();
 
-                for ($j = 0; $j < $jumlahJam && !$availableWaktu->isEmpty(); $j++) {
-                    $waktuId = $availableWaktu->pop();
+                foreach ($kelasReqs as $req) {
+                    $mapelId = $req['mapel_id'];
+                    $jumlahJam = $req['jumlah_jam'] ?? 2;
+                    $guruOptions = $req['guru_options'] ?? [];
 
-                    // Pilih guru yang belum terpakai di waktu ini
-                    $availableGuru = array_filter($req['guru_options'], function ($gid) use ($guruTerpakai, $waktuId) {
-                        return empty($guruTerpakai[$waktuId][$gid]);
+             for ($j = 0; $j < $jumlahJam; $j++) {
+            if ($availableWaktu->isEmpty()) {
+                // Cari slot kosong di seluruh jadwal
+                $waktuId = $this->findEmptyWaktu($chrom, $kelasId);
+                if (!$waktuId) continue; // Kalau tetap gak ketemu, skip (rare case)
+            } else {
+                $waktuId = $availableWaktu->pop();
+            }
+
+            $availableGuru = array_filter($guruOptions, fn($gid) =>
+                empty($guruTerpakai[$waktuId][$gid])
+            );
+
+            if (empty($availableGuru)) continue;
+
+            $guruId = $availableGuru[array_rand($availableGuru)];
+
+            $chrom[] = [
+                'kelas_id' => $kelasId,
+                'mapel_id' => $mapelId,
+                'guru_id' => $guruId,
+                'waktu_id' => $waktuId,
+                'ruangan_id' => $this->assignRuangan($req, $kelasId),
+            ];
+
+            $guruTerpakai[$waktuId][$guruId] = true;
+        }
+
+                }
+            }
+
+            $this->fillSlotsOptimized($chrom);
+            // $this->repairDailySlots($chrom);
+
+            $pop[] = $chrom;
+            Log::info("🧬 Kromosom ke-$i jumlah gen: " . count($chrom));
+        }
+
+        Log::info("✅ Total kromosom: " . count($pop));
+
+        return $pop;
+    }
+
+    public function fillSlotsOptimized(&$chrom)
+    {
+        foreach ($this->requirements as $req) {
+                // Hitung sudah terjadwal berapa jam untuk kelas & mapel ini
+                $count = collect($chrom)
+                    ->where('kelas_id', $req['kelas_id'])
+                    ->where('mapel_id', $req['mapel_id'])
+                    ->count();
+
+                $needed = ($req['jumlah_jam'] ?? 2) - $count;
+                if ($needed <= 0) continue;
+
+                // Ambil semua waktu dan acak urutannya
+                $availableWaktu = $this->waktuList->pluck('id')->shuffle()->toArray();
+
+                // Ambil waktu yang sudah terpakai oleh kelas tsb, supaya tidak double booking
+                $usedWaktuByKelas = collect($chrom)
+                    ->where('kelas_id', $req['kelas_id'])
+                    ->pluck('waktu_id')
+                    ->toArray();
+
+                // Filter waktu yang belum dipakai kelas tsb
+                $remainingWaktu = array_diff($availableWaktu, $usedWaktuByKelas);
+
+            foreach ($remainingWaktu as $waktuId) {
+                    if ($needed <= 0) break;
+
+                    // Pilih guru random yang tidak bentrok di waktu ini
+                    $availableGuru = array_filter($req['guru_options'] ?? [], function($gid) use ($chrom, $waktuId) {
+                        return !collect($chrom)->contains(function($gene) use ($gid, $waktuId) {
+                            return $gene['guru_id'] == $gid && $gene['waktu_id'] == $waktuId;
+                        });
                     });
 
                     if (empty($availableGuru)) continue;
 
+                    // Pilih guru acak dari yang available
                     $guruId = $availableGuru[array_rand($availableGuru)];
 
-                    $chrom[] = [
-                        'kelas_id'   => $kelasId,
-                        'mapel_id'   => $mapelId,
-                        'guru_id'    => $guruId,
-                        'waktu_id'   => $waktuId,
-                        'ruangan_id' => $this->assignRuangan($req, $kelasId),
-                    ];
+                    $ruanganId = $this->assignRuangan($req, $req['kelas_id']);
 
-                    $guruTerpakai[$waktuId][$guruId] = true;
+                    // Cek conflict keseluruhan (kelas, guru, ruangan)
+                    if ($this->isConflictFree($chrom, $waktuId, $req['kelas_id'], $guruId, $ruanganId)) {
+                        $chrom[] = [
+                            'kelas_id' => $req['kelas_id'],
+                            'mapel_id' => $req['mapel_id'],
+                            'guru_id' => $guruId,
+                            'waktu_id' => $waktuId,
+                            'ruangan_id' => $ruanganId,
+                        ];
+                        $needed--;
+                    }
+            }
+        }
+    }
+ 
+    protected function findEmptyWaktu($chrom, $kelasId)
+    {
+        $occupied = array_column(
+            array_filter($chrom, fn($g) => $g['kelas_id'] === $kelasId),
+            'waktu_id'
+        );
+
+        $possible = $this->waktuList->pluck('id')
+            ->diff($occupied)
+            ->values();
+
+        return $possible->isNotEmpty() ? $possible->random() : null;
+    }
+
+    protected function assignRuangan($req, $kelasId)
+    {
+        if (!empty($req['requires_ruang'])) {
+            $filtered = $this->rooms->filter(fn($r) => strtolower($r->tipe) === strtolower($req['requires_ruang']));
+            if ($filtered->isNotEmpty()) {
+                return $filtered->random()->id;
+            }
+        }
+        return $this->kelasToRuangan[$kelasId] ?? $this->rooms->random()->id;
+    }
+
+    protected function isConflictFree($chrom, $waktuId, $kelasId, $guruId, $ruanganId)
+    {
+        foreach ($chrom as $g) {
+            if ($g['waktu_id'] == $waktuId) {
+                if ($g['guru_id'] == $guruId || $g['kelas_id'] == $kelasId || $g['ruangan_id'] == $ruanganId) {
+                    return false;
                 }
             }
         }
-
-        $totalGen += count($chrom);
-        Log::info("🧬 Kromosom ke-$i jumlah gen: " . count($chrom));
-        $pop[] = $chrom;
+        return true;
     }
 
-    Log::info("✅ Jumlah kromosom yang terbentuk: " . count($pop));
-    Log::info("📊 Total gen: $totalGen | Rata-rata gen per kromosom: " . ($totalGen / max(count($pop), 1)));
+    protected function repairAllConflicts(array $chrom): array
+    {
+        $grouped = collect($chrom)->groupBy('waktu_id');
+        $newChrom = [];
 
-    return $pop;
-}
+        foreach ($grouped as $waktuId => $entries) {
+            $guruUsed = [];
+            $kelasUsed = [];
+            $ruangUsed = [];
 
+            foreach ($entries as $g) {
+                $kelasId = $g['kelas_id'];
+                $mapelId = $g['mapel_id'];
+                $guruId  = $g['guru_id'];
+                $ruangId = $g['ruangan_id'];
 
+                // Cek konflik guru
+                if (in_array($guruId, $guruUsed)) {
+                    $req = collect($this->requirements)->first(fn($r) =>
+                        $r['kelas_id'] == $kelasId && $r['mapel_id'] == $mapelId
+                    );
 
+                    $availableGuru = array_diff($req['guru_options'], $guruUsed);
+                    if (!empty($availableGuru)) {
+                        $guruId = array_rand(array_flip($availableGuru));
+                    } else {
+                        $altWaktu = $this->getRandomAvailableWaktu($newChrom, $kelasId, $guruId);
+                        if ($altWaktu) {
+                            $g['waktu_id'] = $altWaktu;
+                            $newChrom[] = $g;
+                            continue;
+                        }
+                    }
+                }
 
-    // Mutasi kromosom
+                // Cek konflik kelas
+                if (in_array($kelasId, $kelasUsed)) {
+                    $altWaktu = $this->getRandomAvailableWaktu($newChrom, $kelasId, $guruId);
+                    if ($altWaktu) {
+                        $g['waktu_id'] = $altWaktu;
+                        $newChrom[] = $g;
+                        continue;
+                    }
+                }
+
+                // Cek konflik ruangan
+                if (in_array($ruangId, $ruangUsed)) {
+                    $req = collect($this->requirements)->first(fn($r) =>
+                        $r['kelas_id'] == $kelasId && $r['mapel_id'] == $mapelId
+                    );
+
+                    if (!empty($req['requires_ruang'])) {
+                        $filtered = $this->rooms->filter(fn($r) => strtolower($r->tipe) === strtolower($req['requires_ruang']));
+                        $availableRuang = array_diff($filtered->pluck('id')->toArray(), $ruangUsed);
+                    } else {
+                        $availableRuang = array_diff($this->rooms->pluck('id')->toArray(), $ruangUsed);
+                    }
+
+                    if (!empty($availableRuang)) {
+                        $ruangId = $availableRuang[array_rand($availableRuang)];
+                    } else {
+                        $altWaktu = $this->getRandomAvailableWaktu($newChrom, $kelasId, $guruId);
+                        if ($altWaktu) {
+                            $g['waktu_id'] = $altWaktu;
+                            $newChrom[] = $g;
+                            continue;
+                        }
+                    }
+                }
+
+                $guruUsed[]  = $guruId;
+                $kelasUsed[] = $kelasId;
+                $ruangUsed[] = $ruangId;
+
+                $g['guru_id']    = $guruId;
+                $g['ruangan_id'] = $ruangId;
+                $newChrom[] = $g;
+            }
+        }
+
+        return $newChrom;
+    }
+
+    protected function crossoverMapelWise(array $pop): array
+    {
+        // Ambil beberapa parent, pilih gen mapel acak dari mereka
+        $parents = $this->selectMultipleParents($pop, 5);
+        $child = [];
+        $mapelGroups = collect($parents)->flatten(1)->groupBy('mapel_id');
+
+        foreach ($mapelGroups as $mapelId => $genes) {
+            $selected = $genes->random();
+            $child[] = $selected;
+        }
+        return $child;
+    }
+
+    protected function selectMultipleParents(array $pop, int $count): array
+    {
+        $parents = [];
+        for ($i = 0; $i < $count; $i++) {
+            $parents[] = $this->selectTournament($pop);
+        }
+        return $parents;
+    }
+
+    protected function selectTournament($pop)
+    {
+        $best = null;
+        for ($i = 0; $i < 5; $i++) {
+            $candidate = $pop[array_rand($pop)];
+            if (!$best || $this->fitness($candidate) > $this->fitness($best)) {
+                $best = $candidate;
+            }
+        }
+        return $best;
+    }
+
     protected function mutateAdvanced(array $chrom): array
     {
         foreach ($chrom as &$g) {
@@ -209,300 +386,61 @@ protected function initialPopulation()
 
             $g['guru_id'] = $req['guru_options'][array_rand($req['guru_options'])];
             $newWaktu = $this->getRandomAvailableWaktu($chrom, $g['kelas_id'], $g['guru_id']);
-            if ($newWaktu) $g['waktu_id'] = $newWaktu;
+            if ($newWaktu) {
+                if ($this->isConflictFree($chrom, $newWaktu, $g['kelas_id'], $g['guru_id'], $g['ruangan_id'])) {
+                    $g['waktu_id'] = $newWaktu;
+                }
+            }
             $g['ruangan_id'] = $this->assignRuangan($req, $g['kelas_id']);
         }
-
         return $chrom;
     }
 
-    // Fungsi evaluasi kualitas solusi
-    protected function fitness($chrom)
+    protected function getRandomAvailableWaktu($chrom, $kelasId, $guruId = null)
     {
-        $KG = 0; $KR = 0; $KW = 0;
-        $byWaktu = collect($chrom)->groupBy('waktu_id');
+        $usedWaktuKelas = collect($chrom)->where('kelas_id', $kelasId)->pluck('waktu_id')->toArray();
+        $usedWaktuGuru = $guruId
+            ? collect($chrom)->where('guru_id', $guruId)->pluck('waktu_id')->toArray()
+            : [];
 
-        foreach ($byWaktu as $waktuId => $items) {
-            $guruCounter = [];
+        $allIds = $this->waktuList->pluck('id')->toArray();
+        $remaining = array_diff($allIds, $usedWaktuKelas, $usedWaktuGuru);
+
+        return !empty($remaining) ? collect($remaining)->random() : null;
+    }
+
+        protected function fitness($chrom)
+    {
+        $KG = $KR = $KW = 0;
+
+        $byWaktu = [];
+        foreach ($chrom as $g) {
+            $byWaktu[$g['waktu_id']][] = $g;
+        }
+
+        foreach ($byWaktu as $items) {
+            $guruCounter  = [];
             $ruangCounter = [];
             $kelasCounter = [];
 
             foreach ($items as $g) {
-                $guruCounter[$g['guru_id']] = ($guruCounter[$g['guru_id']] ?? 0) + 1;
+                $guruCounter[$g['guru_id']]   = ($guruCounter[$g['guru_id']] ?? 0) + 1;
                 $ruangCounter[$g['ruangan_id']] = ($ruangCounter[$g['ruangan_id']] ?? 0) + 1;
                 $kelasCounter[$g['kelas_id']] = ($kelasCounter[$g['kelas_id']] ?? 0) + 1;
             }
 
-            $KG += collect($guruCounter)->filter(fn($c) => $c > 1)->count();
-            $KR += collect($ruangCounter)->filter(fn($c) => $c > 1)->count();
-            $KW += collect($kelasCounter)->filter(fn($c) => $c > 1)->count();
+            foreach ($guruCounter as $c)  if ($c > 1) $KG++;
+            foreach ($ruangCounter as $c) if ($c > 1) $KR++;
+            foreach ($kelasCounter as $c) if ($c > 1) $KW++;
         }
 
         $totalPenalty = $KG + $KR + $KW;
         $hardScore = 1 / (1 + $totalPenalty);
-        $softScore = $this->scoreDistribusiJamMapel($chrom);
 
-        return 0.7 * $hardScore + 0.3 * $softScore;
+        Log::info("Fitness computed: totalPenalty=$totalPenalty, hardScore=$hardScore");
+        
+        return $hardScore;
     }
-
-    protected function crossoverMapelWise(array $pop): array
-    {
-        $parents = $this->selectMultipleParents($pop, 5);
-        $child = [];
-        $mapelGroups = collect($parents)->flatten(1)->groupBy('mapel_id');
-
-        foreach ($mapelGroups as $mapelId => $genes) {
-            $selected = $genes->random();
-            $child[] = $selected;
-        }
-
-        return $child;
-    }
-    // Seleksi beberapa parent menggunakan tournament
-    protected function selectMultipleParents(array $pop, int $count): array
-    {
-        $parents = [];
-        for ($i = 0; $i < $count; $i++) {
-            $parents[] = $this->selectTournament($pop);
-        }
-        return $parents;
-    }
-
-    // Tournament selection untuk seleksi parent terbaik
-    protected function selectTournament($pop)
-    {
-        $best = null;
-        for ($i = 0; $i < 3; $i++) {
-            $candidate = $pop[array_rand($pop)];
-            if (!$best || $this->fitness($candidate) > $this->fitness($best)) {
-                $best = $candidate;
-            }
-        }
-        return $best;
-    }
-
-    protected function scoreDistribusiJamMapel($chrom)
-    {
-        $score = 0;
-        $grouped = collect($chrom)->groupBy(fn($g) => $g['kelas_id'] . '-' . $g['mapel_id']);
-
-        foreach ($grouped as $key => $entries) {
-            $days = $entries->map(fn($e) => $this->hariCache[$e['waktu_id']] ?? null)->unique()->count();
-            if ($days > 1) $score++;
-        }
-
-        $maxScore = $grouped->count();
-        return $maxScore > 0 ? $score / $maxScore : 0;
-    }
-
-
-    // Alokasikan ruangan untuk requirement tertentu
-    protected function assignRuangan($req, $kelasId)
-    {
-        if (!empty($req['requires_ruang'])) {
-            $filtered = $this->rooms->filter(fn($r) => strtolower($r->tipe) === strtolower($req['requires_ruang']));
-            if ($filtered->isNotEmpty()) {
-                return $filtered->random()->id;
-            }
-        }
-
-        return $this->kelasToRuangan[$kelasId] ?? $this->rooms->random()->id;
-    }
-
-    // Petakan nama kelas ke ruangan jika tipe ruang = kelas
-    protected function mapKelasToRuangan()
-    {
-        foreach ($this->rooms as $room) {
-            if (strtolower($room->tipe) === 'kelas') {
-                $kelas = Kelas::where('nama', $room->nama)->first();
-                if ($kelas) {
-                    $this->kelasToRuangan[$kelas->id] = $room->id;
-                }
-            }
-        }
-    }
-
-    // Ambil semua waktu yang valid per hari
-    protected function getValidWaktuPerHari()
-    {
-        return $this->waktuList->groupBy('hari')->map(fn($waktus) => $waktus->pluck('id'));
-    }
-
-    // Ambil waktu acak yang belum dipakai untuk kelas tertentu
-    // protected function getRandomAvailableWaktu($chrom, $kelasId)
-    // {
-    //     $usedWaktu = collect($chrom)->where('kelas_id', $kelasId)->pluck('waktu_id')->toArray();
-    //     $allIds = $this->waktuList->pluck('id')->toArray();
-    //     $remaining = array_diff($allIds, $usedWaktu);
-
-    //     return !empty($remaining) ? collect($remaining)->random() : null;
-    // }
-// Tambahkan pengecekan agar waktu tidak dipakai oleh guru lain
-protected function getRandomAvailableWaktu($chrom, $kelasId, $guruId = null)
-{
-    $usedWaktuKelas = collect($chrom)->where('kelas_id', $kelasId)->pluck('waktu_id')->toArray();
-    $usedWaktuGuru = $guruId
-        ? collect($chrom)->where('guru_id', $guruId)->pluck('waktu_id')->toArray()
-        : [];
-
-    $allIds = $this->waktuList->pluck('id')->toArray();
-    $remaining = array_diff($allIds, $usedWaktuKelas, $usedWaktuGuru);
-
-    return !empty($remaining) ? collect($remaining)->random() : null;
-}
-
-
-    protected function autoRepairConflicts(array $chrom): array
-{
-    $byWaktu = collect($chrom)->groupBy('waktu_id');
-    $repaired = [];
-
-    foreach ($byWaktu as $waktuId => $entries) {
-        $guruUsed = [];
-
-        foreach ($entries as $g) {
-            if (!isset($guruUsed[$g['guru_id']])) {
-                $guruUsed[$g['guru_id']] = true;
-                $repaired[] = $g;
-            } else {
-                // konflik guru: cari waktu alternatif
-                $altWaktu = $this->getRandomAvailableWaktu($chrom, $g['kelas_id']);
-                if ($altWaktu) {
-                    $g['waktu_id'] = $altWaktu;
-                    $repaired[] = $g;
-                } else {
-                    // tidak ada alternatif, tetap masukkan walau konflik
-                    $repaired[] = $g;
-                }
-            }
-        }
-    }
-
-    return $repaired;
-}
-
-public function fillRemainingJadwal(&$chrom)
-{
-    foreach ($this->requirements as $req) {
-        $count = collect($chrom)->where('kelas_id', $req['kelas_id'])->where('mapel_id', $req['mapel_id'])->count();
-
-        $needed = ($req['jumlah_jam'] ?? 2) - $count;
-        if ($needed <= 0) continue;
-
-        $availableWaktu = $this->waktuList->pluck('id')->shuffle();
-        $usedWaktu = collect($chrom)->pluck('waktu_id')->toArray();
-        $remaining = array_diff($availableWaktu->toArray(), $usedWaktu);
-
-        for ($i = 0; $i < $needed && !empty($remaining); $i++) {
-            $waktuId = array_pop($remaining);
-            $guruId = $req['guru_options'][array_rand($req['guru_options'])];
-
-            $chrom[] = [
-                'kelas_id'   => $req['kelas_id'],
-                'mapel_id'   => $req['mapel_id'],
-                'guru_id'    => $guruId,
-                'waktu_id'   => $waktuId,
-                'ruangan_id' => $this->assignRuangan($req, $req['kelas_id']),
-            ];
-        }
-    }
-}
-
-protected function repairJadwalKurang(&$chrom)
-{
-    foreach ($this->requirements as $req) {
-        $kelasId = $req['kelas_id'];
-        $mapelId = $req['mapel_id'];
-        $targetJam = $req['jumlah_jam'] ?? 2;
-
-        // Hitung jam yang sudah terisi untuk mapel ini
-        $terisi = collect($chrom)
-            ->where('kelas_id', $kelasId)
-            ->where('mapel_id', $mapelId)
-            ->count();
-
-        $sisa = $targetJam - $terisi;
-        if ($sisa <= 0) continue;
-
-        // Ambil waktu yang belum digunakan untuk kelas ini
-        $usedWaktu = collect($chrom)
-            ->where('kelas_id', $kelasId)
-            ->pluck('waktu_id')
-            ->toArray();
-
-        $availableWaktu = $this->waktuList
-            ->pluck('id')
-            ->filter(fn($id) => !in_array($id, $usedWaktu))
-            ->shuffle()
-            ->values();
-
-        for ($i = 0; $i < $sisa && $i < $availableWaktu->count(); $i++) {
-            $chrom[] = [
-                'kelas_id'   => $kelasId,
-                'mapel_id'   => $mapelId,
-                'guru_id'    => $req['guru_options'][array_rand($req['guru_options'])],
-                'waktu_id'   => $availableWaktu[$i],
-                'ruangan_id' => $this->assignRuangan($req, $kelasId),
-            ];
-        }
-    }
-}
-
-protected function resolveGuruConflicts(array $chrom): array
-{
-    $grouped = collect($chrom)->groupBy('waktu_id');
-    $newChrom = [];
-
-    foreach ($grouped as $waktuId => $entries) {
-        $guruUsed = [];
-
-        foreach ($entries as $g) {
-            $kelasId = $g['kelas_id'];
-            $mapelId = $g['mapel_id'];
-            $guruId = $g['guru_id'];
-
-            if (!in_array($guruId, $guruUsed)) {
-                $guruUsed[] = $guruId;
-                $newChrom[] = $g;
-                continue;
-            }
-
-            // Ada konflik guru di waktu ini
-            $req = collect($this->requirements)->first(fn($r) =>
-                $r['kelas_id'] == $kelasId && $r['mapel_id'] == $mapelId
-            );
-
-            // 1️⃣ Coba cari guru alternatif
-            $availableGuru = array_diff($req['guru_options'], [$guruId]);
-            $found = false;
-
-            foreach ($availableGuru as $altGuruId) {
-                if (!in_array($altGuruId, $guruUsed)) {
-                    $g['guru_id'] = $altGuruId;
-                    $guruUsed[] = $altGuruId;
-                    $newChrom[] = $g;
-                    $found = true;
-                    break;
-                }
-            }
-
-            if ($found) continue;
-
-            // 2️⃣ Kalau tidak ada guru alternatif, coba cari waktu lain
-            $altWaktu = $this->getRandomAvailableWaktu($newChrom, $kelasId, $guruId);
-            if ($altWaktu) {
-                $g['waktu_id'] = $altWaktu;
-                $newChrom[] = $g;
-                continue;
-            }
-
-            // 3️⃣ Jika semua gagal → tetap masukkan walau konflik
-            $newChrom[] = $g;
-        }
-    }
-
-    return $newChrom;
-}
 
 
 }

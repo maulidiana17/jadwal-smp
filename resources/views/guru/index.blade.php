@@ -64,7 +64,6 @@
                       <thead>
                         <tr>
                           <th>No</th>
-                          <th>Kode Guru</th>
                           <th>Nama</th>
                           <th>NIP</th>
                           <th>Email</th>
@@ -76,8 +75,7 @@
                         @foreach ($gurus as $g)
                             <tr>
                           <td>{{ $loop->iteration }}</td>
-                          <td>{{ $g->kode_guru }}</td>
-                          <td>{{ $g->nama}}</td>
+                          <td>{{ $g->nama }}</td>
                           <td>{{ $g->nip }}</td>
                           <td>{{ $g->email }}</td>
                           <td>{{ $g->alamat }}</td>

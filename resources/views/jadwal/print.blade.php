@@ -128,15 +128,25 @@
                 <tr>
                     <th rowspan="2">Kelas</th>
                     @foreach(['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'] as $hari)
-                        <th colspan="8">{{ $hari }}</th>
+                        @if(in_array($hari, ['Jumat','Sabtu']))
+                            <th colspan="5">{{ $hari }}</th>
+                        @else
+                            <th colspan="8">{{ $hari }}</th>
+                        @endif
                     @endforeach
                 </tr>
                 <tr>
-                    @for($i = 0; $i < 6; $i++) {{-- 6 hari --}}
-                        @for($j = 1; $j <= 8; $j++)
-                            <th>{{ $j }}</th>
-                        @endfor
-                    @endfor
+                    @foreach(['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'] as $hari)
+                        @if(in_array($hari, ['Jumat','Sabtu']))
+                            @for($j = 1; $j <= 5; $j++)
+                                <th>{{ $j }}</th>
+                            @endfor
+                        @else
+                            @for($j = 1; $j <= 8; $j++)
+                                <th>{{ $j }}</th>
+                            @endfor
+                        @endif
+                    @endforeach
                 </tr>
             </thead>
             <tbody>
@@ -170,6 +180,10 @@
                         @foreach(['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'] as $hari)
                             @for($jam = 1; $jam <= 8; $jam++)
                                 @php
+                                    // Skip jam 6-8 khusus hari Jumat dan Sabtu
+                                    if (in_array($hari, ['Jumat', 'Sabtu']) && $jam >= 6) {
+                                        continue;
+                                    }
                                     if ($hari == 'Senin' && in_array($jam, [1, 2])) {
                                         $bg = '#ddd';
                                         $text = 'Up Lit';

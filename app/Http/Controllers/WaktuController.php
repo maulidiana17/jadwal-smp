@@ -72,6 +72,8 @@ class WaktuController extends Controller
     {
         try {
             \App\Models\Waktu::query()->delete();
+            // Reset auto increment ke 1
+            \DB::statement('ALTER TABLE waktu AUTO_INCREMENT = 1');
             return redirect()->route('waktu.index')->with('success', 'Seluruh data waktu berhasil direset.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal mereset data: ' . $e->getMessage());

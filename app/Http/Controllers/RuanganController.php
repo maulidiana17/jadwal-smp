@@ -70,6 +70,8 @@ class RuanganController extends Controller
     {
         try {
             \App\Models\Ruangan::query()->delete();
+            // Reset auto increment ke 1
+            \DB::statement('ALTER TABLE ruangan AUTO_INCREMENT = 1');
             return redirect()->route('ruangan.index')->with('success', 'Seluruh data ruangan berhasil direset.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal mereset data: ' . $e->getMessage());

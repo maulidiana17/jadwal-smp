@@ -59,7 +59,6 @@
                       <thead>
                         <tr>
                           <th>No</th>
-                          <th>Kode Mapel</th>
                           <th>Mata Pelajaran</th>
                           <th>Jam/Minggu</th>
                           <th>Ruang Khusus</th>
@@ -70,7 +69,6 @@
                         @foreach ($mapels as $m)
                             <tr>
                           <td>{{ $loop->iteration }}</td>
-                          <td>{{ $m->kode_mapel }}</td>
                           <td>{{ $m->mapel }}</td>
                           <td>{{ $m->jam_per_minggu }}</td>
                           <td>{{ $m->ruang_khusus }}</td>

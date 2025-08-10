@@ -58,7 +58,6 @@
                       <thead>
                         <tr>
                           <th>No</th>
-                          <th>Kode Ruangan</th>
                           <th>Nama </th>
                           <th>Tipe</th>
                           <th>Fasilitas</th>
@@ -69,7 +68,6 @@
                         @foreach ($ruangans as $rg)
                             <tr>
                           <td>{{ $loop->iteration }}</td>
-                          <td>{{ $rg->kode_ruangan }}</td>
                           <td>{{ $rg->nama}}</td>
                           <td>{{ $rg->tipe}}</td>
                           <td>{{ $rg->fasilitas}}</td>

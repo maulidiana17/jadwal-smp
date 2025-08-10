@@ -65,6 +65,8 @@ class KelasController extends Controller
     {
         try {
             \App\Models\Kelas::query()->delete();
+            // Reset auto increment ke 1
+            \DB::statement('ALTER TABLE kelas AUTO_INCREMENT = 1');
             return redirect()->route('kelas.index')->with('success', 'Seluruh data kelas berhasil direset.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal mereset data: ' . $e->getMessage());

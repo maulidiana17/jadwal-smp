@@ -69,6 +69,8 @@ class MapelController extends Controller
     {
         try {
             \App\Models\Mapel::query()->delete();
+            // Reset auto increment ke 1
+            \DB::statement('ALTER TABLE mapel AUTO_INCREMENT = 1');
             return redirect()->route('mapel.index')->with('success', 'Seluruh data mata pelajaran berhasil direset.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal mereset data: ' . $e->getMessage());

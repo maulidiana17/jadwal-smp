@@ -59,7 +59,8 @@ class PengampuController extends Controller
             'guru_id' => 'required|exists:guru,id',
             'mapel_id' => 'required|exists:mapel,id',
             'kelas_ids' => 'required|array|min:1',
-            'kelas_ids.*' => 'exists:kelas,id'
+            'kelas_ids.*' => 'exists:kelas,id', 
+            'jumlah_jam' => 'required|integer|min:1'
         ]);
 
         foreach ($request->kelas_ids as $kelas_id) {
@@ -67,7 +68,9 @@ class PengampuController extends Controller
                 'guru_id' => $request->guru_id,
                 'mapel_id' => $request->mapel_id,
                 'kelas_id' => $kelas_id,
-            ]);
+        ], [
+            'jumlah_jam' => $request->jumlah_jam
+        ]);
         }
 
         return redirect()->route('pengampu.index')->with('success', 'Data pengampu berhasil disimpan.');
@@ -82,21 +85,6 @@ class PengampuController extends Controller
         return view('pengampu.index', ['groups' => $groups]);
     }
 
-    // public function editMultiple($guru_id, $mapel_id)
-    // {
-    //     $kelasList = \App\Models\Kelas::all();
-    //     $pengampuGroup = \App\Models\Pengampu::with('guru', 'mapel')
-    //         ->where('guru_id', $guru_id)
-    //         ->where('mapel_id', $mapel_id)
-    //         ->first();
-
-    //     $kelasSelected = \App\Models\Pengampu::where('guru_id', $guru_id)
-    //         ->where('mapel_id', $mapel_id)
-    //         ->pluck('kelas_id')
-    //         ->toArray();
-
-    //     return view('pengampu.edit', compact('pengampuGroup', 'kelasList', 'kelasSelected'));
-    // }
     public function editMultiple($guru_id, $mapel_id)
     {
         $pengampuGroup = Pengampu::where('guru_id', $guru_id)
@@ -119,6 +107,7 @@ class PengampuController extends Controller
         $request->validate([
             'mapel_id' => 'required|exists:mapel,id',
             'kelas_ids' => 'required|array|min:1',
+            'jumlah_jam' => 'required|integer|min:1'
         ]);
 
         $new_mapel_id = $request->input('mapel_id');
@@ -135,6 +124,7 @@ class PengampuController extends Controller
                 'guru_id' => $guru_id,
                 'mapel_id' => $new_mapel_id,
                 'kelas_id' => $kelas_id,
+                'jumlah_jam' => $request->jumlah_jam
             ]);
         }
 

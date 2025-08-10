@@ -7,7 +7,6 @@ use App\Models\Kelas;
 use App\Models\Mapel;
 use App\Models\Waktu;
 use App\Models\Jadwal;
-use App\Models\JadwalConflict;
 use App\Models\Ruangan;
 use App\Models\Pengampu;
 use Illuminate\Http\Request;
@@ -82,111 +81,343 @@ class JadwalController extends Controller
     
         // Simpan skor fitness
         file_put_contents(storage_path('logs/fitness.txt'), $fitness);
+
+        // Simpan hasil generate untuk evaluasi
+        file_put_contents(storage_path('logs/hasil_generate.json'), json_encode([
+        'berhasil' => $savedCount,
+        'skipped'  => $skipped
+        ]));
         
         return redirect()->route('jadwal.index');
     }
 
 
 
-    public function evaluasi()
-    {
-        // Ambil semua jadwal lengkap dengan relasi
-        $jadwals = \App\Models\Jadwal::with(['guru', 'kelas', 'mapel', 'ruangan', 'waktu'])->get();
-    
-        // Total jadwal yang berhasil disimpan
-        $total = $jadwals->count();
-    
-        // Total ideal berdasarkan semua jam_per_minggu
-        $pengampus = \App\Models\Pengampu::with('mapel')->get();
-        $expectedTotal = $pengampus
-            ->filter(fn($p) => $p->mapel && $p->mapel->jam_per_minggu)
-            ->sum(fn($p) => $p->mapel->jam_per_minggu);
+    // public function evaluasi()
+    // {
+    //     // Ambil semua jadwal dari DB untuk deteksi konflik & cek coverage
+    //     $jadwals = \App\Models\Jadwal::with(['guru', 'kelas', 'mapel', 'ruangan', 'waktu'])->get();
 
-        // Hitung skipped dengan aman (tidak negatif)
-        $skipped = max(0, $expectedTotal - $total);
+    //     // Hitung expected total dari semua pengampu
+    //     $pengampus = \App\Models\Pengampu::with('mapel')->get();
+    //     $expectedTotal = $pengampus
+    //         ->filter(fn($p) => $p->mapel && $p->mapel->jam_per_minggu)
+    //         ->sum(fn($p) => $p->mapel->jam_per_minggu);
 
-        // Deteksi konflik (guru, kelas, ruangan bentrok di waktu yang sama)
-        $conflicts = [];
-        $conflictGuru = 0;
-        $conflictKelas = 0;
-        $conflictRuangan = 0;
-            
-        foreach ($jadwals as $i => $a) {
-            foreach ($jadwals as $j => $b) {
-                if ($i >= $j) continue; // Hindari duplikat dan diri sendiri
-    
-                $sameTime = $a->waktu_id === $b->waktu_id;
-    
-                if (!$sameTime) continue;
-    
-                $waktuText = $a->waktu
-                    ? $a->waktu->hari . ' ' . $a->waktu->jam_mulai . ' - ' . $a->waktu->jam_selesai
-                    : 'Waktu ID: ' . $a->waktu_id;
-    
-                // Cek konflik guru
-                if ($a->guru_id && $a->guru_id === $b->guru_id) {
-                    $conflicts[] = [
-                        'type' => 'guru',
-                        'waktu' => $waktuText,
-                        'guru' => $a->guru->nama ?? 'Guru ID: ' . $a->guru_id,
-                        'kelas_a' => $a->kelas->nama ?? 'Kelas A ID: ' . $a->kelas_id,
-                        'kelas_b' => $b->kelas->nama ?? 'Kelas B ID: ' . $b->kelas_id,
-                    ];
-                    $conflictGuru++;
-                }
-    
-                // Cek konflik kelas
-                if ($a->kelas_id && $a->kelas_id === $b->kelas_id) {
-                    $conflicts[] = [
-                        'type' => 'kelas',
-                        'waktu' => $waktuText,
-                        'kelas' => $a->kelas->nama ?? 'Kelas ID: ' . $a->kelas_id,
-                        'mapel_a' => $a->mapel->nama ?? 'Mapel A ID: ' . $a->mapel_id,
-                        'mapel_b' => $b->mapel->nama ?? 'Mapel B ID: ' . $b->mapel_id,
-                    ];
-                    $conflictKelas++;
-                }
-    
-                // Cek konflik ruangan
-                if ($a->ruangan_id && $a->ruangan_id === $b->ruangan_id) {
-                    $conflicts[] = [
-                        'type' => 'ruangan',
-                        'waktu' => $waktuText,
-                        'ruangan' => $a->ruangan->nama ?? 'Ruangan ID: ' . $a->ruangan_id,
-                        'kelas_a' => $a->kelas->nama ?? 'Kelas A ID: ' . $a->kelas_id,
-                        'kelas_b' => $b->kelas->nama ?? 'Kelas B ID: ' . $b->kelas_id,
-                    ];
-                    $conflictRuangan++;
-                }
-            }
-        }
-    
-        // Hitung jumlah konflik dan tidak konflik
-        $conflictCount = count($conflicts);
-        $nonConflictCount = $total - $conflictCount;
-    
-        // Ambil nilai fitness dari file jika ada
-        $fitness = null;
-        $fitnessFile = storage_path('logs/fitness.txt');
-        if (file_exists($fitnessFile)) {
-            $fitness = file_get_contents($fitnessFile);
-        }
-    
-        return view('jadwal.evaluasi', [
-            'total' => $total,
-            'expected' => $expectedTotal,
-            'skipped' => $skipped,
-            'fitness' => $fitness,
-            'conflicts' => $conflicts,
-            'conflictCount' => $conflictCount,
-            'nonConflictCount' => $nonConflictCount,
-            'conflictGuru' => $conflictGuru,
-            'conflictKelas' => $conflictKelas,
-            'conflictRuangan' => $conflictRuangan,
-        ]);
+    //     // Baca hasil generate terakhir (skipped teknis & total jadwal tersimpan)
+    //     $hasilGenerateFile = storage_path('logs/hasil_generate.json');
+    //     if (file_exists($hasilGenerateFile)) {
+    //         $hasilGenerate = json_decode(file_get_contents($hasilGenerateFile), true);
+    //         $total = $hasilGenerate['berhasil'];
+    //         $skippedTeknis = $hasilGenerate['skipped'];
+    //     } else {
+    //         $total = $jadwals->count();
+    //         $skippedTeknis = max(0, $expectedTotal - $total);
+    //     }
+
+    //     // Skipped akademik = jam seharusnya - jam terjadwal
+    //     $skippedAkademik = max(0, $expectedTotal - $total);
+
+    //     // Cari pengampu/mapel yang tidak punya jadwal
+    //     $pengampusTidakTerjadwal = $pengampus->filter(function($p) use ($jadwals) {
+    //         return !$jadwals->contains('pengampu_id', $p->id);
+    //     });
+
+    //     // ====== Deteksi konflik ======
+    //     $conflicts = [];
+    //     $conflictGuru = $conflictKelas = $conflictRuangan = 0;
+
+    //     foreach ($jadwals as $i => $a) {
+    //         foreach ($jadwals as $j => $b) {
+    //             if ($i >= $j) continue;
+    //             if ($a->waktu_id !== $b->waktu_id) continue;
+
+    //             $waktuText = $a->waktu
+    //                 ? $a->waktu->hari . ' ' . $a->waktu->jam_mulai . ' - ' . $a->waktu->jam_selesai
+    //                 : 'Waktu ID: ' . $a->waktu_id;
+
+    //             if ($a->guru_id && $a->guru_id === $b->guru_id) {
+    //                 $conflicts[] = ['type' => 'guru', 'waktu' => $waktuText];
+    //                 $conflictGuru++;
+    //             }
+    //             if ($a->kelas_id && $a->kelas_id === $b->kelas_id) {
+    //                 $conflicts[] = ['type' => 'kelas', 'waktu' => $waktuText];
+    //                 $conflictKelas++;
+    //             }
+    //             if ($a->ruangan_id && $a->ruangan_id === $b->ruangan_id) {
+    //                 $conflicts[] = ['type' => 'ruangan', 'waktu' => $waktuText];
+    //                 $conflictRuangan++;
+    //             }
+    //         }
+    //     }
+
+    //     $conflictCount = count($conflicts);
+    //     $nonConflictCount = $total - $conflictCount;
+
+    //     // Ambil fitness
+    //     $fitness = null;
+    //     $fitnessFile = storage_path('logs/fitness.txt');
+    //     if (file_exists($fitnessFile)) {
+    //         $fitness = file_get_contents($fitnessFile);
+    //     }
+
+    //     return view('jadwal.evaluasi', [
+    //         'total' => $total,
+    //         'expected' => $expectedTotal,
+    //         'skippedTeknis' => $skippedTeknis,
+    //         'skippedAkademik' => $skippedAkademik,
+    //         'pengampusTidakTerjadwal' => $pengampusTidakTerjadwal,
+    //         'fitness' => $fitness,
+    //         'conflicts' => $conflicts,
+    //         'conflictCount' => $conflictCount,
+    //         'nonConflictCount' => $nonConflictCount,
+    //         'conflictGuru' => $conflictGuru,
+    //         'conflictKelas' => $conflictKelas,
+    //         'conflictRuangan' => $conflictRuangan,
+    //     ]);
+    // }
+    // public function evaluasi()
+    // {
+    //     // Ambil semua jadwal dari DB untuk deteksi konflik & cek coverage
+    //     $jadwals = \App\Models\Jadwal::with(['guru', 'kelas', 'mapel', 'ruangan', 'waktu'])->get(); 
+    //     // Ambil semua data pengampu + relasi
+    //     $pengampus = \App\Models\Pengampu::with(['guru', 'kelas', 'mapel'])->get();
+
+
+    //     // ==============================
+    //     // Hitung expected total jam mengajar dari tabel mapel
+    //     // ==============================
+    //     // Total ideal berdasarkan semua jam_per_minggu
+    //     $pengampus = \App\Models\Pengampu::with('mapel')->get();
+    //     $expectedTotal = $pengampus
+    //         ->filter(fn($p) => $p->mapel && $p->mapel->jam_per_minggu)
+    //         ->sum(fn($p) => $p->mapel->jam_per_minggu);
+
+    //     // Hitung skipped dengan aman (tidak negatif)
+    //     $skipped = max(0, $expectedTotal - $total);
+
+    //     // ==============================
+    //     // Baca hasil generate terakhir (skipped teknis & total jadwal tersimpan)
+    //     // ==============================
+    //     // $hasilGenerateFile = storage_path('logs/hasil_generate.json');
+    //     // if (file_exists($hasilGenerateFile)) {
+    //     //     $hasilGenerate = json_decode(file_get_contents($hasilGenerateFile), true);
+    //     //     $total = $hasilGenerate['berhasil'];
+    //     //     $skippedTeknis = $hasilGenerate['skipped'];
+    //     // } else {
+    //     //     $total = $jadwals->count();
+    //     //     $skippedTeknis = max(0, $expectedTotal - $total);
+    //     // }
+
+    //     // ==============================
+    //     // Skipped akademik = slot tersedia - slot terjadwal
+    //     // ==============================
+    //     // $skippedAkademik = max(0, $expectedTotal - $total);
+
+    //     // ==============================
+    //     // Cari pengampu yang kurang jam
+    //     // ==============================
+    //     // $pengampusTidakTerjadwal = $pengampus->map(function($p) use ($jadwals) {
+    //     //     $jamSeharusnya = $p->mapel->jam_per_minggu ?? 0;
+    //     //     $jamTerjadwal = $jadwals->where('pengampu_id', $p->id)->count();
+    //     //     $jamKurang = max(0, $jamSeharusnya - $jamTerjadwal);
+
+    //     //     return (object) [
+    //     //         'id' => $p->id,
+    //     //         'guru' => $p->guru,
+    //     //         'kelas' => $p->kelas,
+    //     //         'mapel' => $p->mapel,
+    //     //         'jam_seharusnya' => $jamSeharusnya,
+    //     //         'jam_terjadwal' => $jamTerjadwal,
+    //     //         'jam_kurang' => $jamKurang
+    //     //     ];
+    //     // })->filter(function($p) {
+    //     //     return $p->jam_kurang > 0; // hanya tampilkan yang masih kurang jam
+    //     // });
+
+    //     // ==============================
+    //     // ====== Deteksi konflik =======
+    //     // ==============================
+    //     $conflicts = [];
+    //     $conflictGuru = $conflictKelas = $conflictRuangan = 0;
+
+    //     foreach ($jadwals as $i => $a) {
+    //         foreach ($jadwals as $j => $b) {
+    //             if ($i >= $j) continue;
+    //             if ($a->waktu_id !== $b->waktu_id) continue;
+
+    //             $waktuText = $a->waktu
+    //                 ? $a->waktu->hari . ' ' . $a->waktu->jam_mulai . ' - ' . $a->waktu->jam_selesai
+    //                 : 'Waktu ID: ' . $a->waktu_id;
+
+    //             if ($a->guru_id && $a->guru_id === $b->guru_id) {
+    //                 $conflicts[] = ['type' => 'guru', 'waktu' => $waktuText];
+    //                 $conflictGuru++;
+    //             }
+    //             if ($a->kelas_id && $a->kelas_id === $b->kelas_id) {
+    //                 $conflicts[] = ['type' => 'kelas', 'waktu' => $waktuText];
+    //                 $conflictKelas++;
+    //             }
+    //             if ($a->ruangan_id && $a->ruangan_id === $b->ruangan_id) {
+    //                 $conflicts[] = ['type' => 'ruangan', 'waktu' => $waktuText];
+    //                 $conflictRuangan++;
+    //             }
+    //         }
+    //     }
+
+    //     $conflictCount = count($conflicts);
+    //     $nonConflictCount = $total - $conflictCount;
+
+    //     // ==============================
+    //     // Ambil fitness terakhir
+    //     // ==============================
+    //     $fitness = null;
+    //     $fitnessFile = storage_path('logs/fitness.txt');
+    //     if (file_exists($fitnessFile)) {
+    //         $fitness = file_get_contents($fitnessFile);
+    //     }
+
+    //     return view('jadwal.evaluasi', [
+    //         'total' => $total,
+    //         'expected' => $expectedTotal,
+    //         'skipped'=> $skipped,
+    //         // 'skippedTeknis' => $skippedTeknis,
+    //         // 'skippedAkademik' => $skippedAkademik,
+    //         // 'pengampusTidakTerjadwal' => $pengampusTidakTerjadwal,
+    //         'fitness' => $fitness,
+    //         'conflicts' => $conflicts,
+    //         'conflictCount' => $conflictCount,
+    //         'nonConflictCount' => $nonConflictCount,
+    //         'conflictGuru' => $conflictGuru,
+    //         'conflictKelas' => $conflictKelas,
+    //         'conflictRuangan' => $conflictRuangan,
+    //     ]);
+    // }
+    // public function evaluasi()
+    // {
+    //     $jadwals = \App\Models\Jadwal::with(['guru', 'kelas', 'mapel', 'ruangan', 'waktu'])->get(); 
+    //     $total = $jadwals->count();
+
+    //     $pengampus = \App\Models\Pengampu::with('mapel')->get();
+    //     $expectedTotal = $pengampus
+    //         ->filter(fn($p) => $p->mapel && $p->mapel->jam_per_minggu)
+    //         ->sum(fn($p) => $p->mapel->jam_per_minggu);
+
+    //     $skipped = max(0, $expectedTotal - $total);
+
+    //     // Kumpulkan konflik detail
+    //     $conflicts = [];
+
+    //     $conflictGuru = $jadwals
+    //         ->groupBy(fn($j) => $j->guru_id . '-' . $j->waktu_id)
+    //         ->filter(function ($group) use (&$conflicts) {
+    //             if ($group->count() > 1) {
+    //                 $conflicts[] = $group; // simpan detail konflik guru
+    //                 return true;
+    //             }
+    //             return false;
+    //         })->count();
+
+    //     $conflictKelas = $jadwals
+    //         ->groupBy(fn($j) => $j->kelas_id . '-' . $j->waktu_id)
+    //         ->filter(function ($group) use (&$conflicts) {
+    //             if ($group->count() > 1) {
+    //                 $conflicts[] = $group; // simpan detail konflik kelas
+    //                 return true;
+    //             }
+    //             return false;
+    //         })->count();
+
+    //     $conflictRuangan = $jadwals
+    //         ->groupBy(fn($j) => $j->ruangan_id . '-' . $j->waktu_id)
+    //         ->filter(function ($group) use (&$conflicts) {
+    //             if ($group->count() > 1) {
+    //                 $conflicts[] = $group; // simpan detail konflik ruangan
+    //                 return true;
+    //             }
+    //             return false;
+    //         })->count();
+
+    //     $totalConflicts = $conflictGuru + $conflictKelas + $conflictRuangan;
+    //     $nonConflictCount = max(0, $total - $totalConflicts);
+
+    //     $fitness = $expectedTotal > 0 ? $nonConflictCount / $expectedTotal : 0;
+
+    //     return view('jadwal.evaluasi', [
+    //         'total' => $total,
+    //         'expected' => $expectedTotal,
+    //         'skipped'=> $skipped,
+    //         'fitness' => round($fitness, 4),
+    //         'totalConflicts' => $totalConflicts,
+    //         'conflictGuru' => $conflictGuru,
+    //         'conflictKelas' => $conflictKelas,
+    //         'conflictRuangan' => $conflictRuangan,
+    //         'nonConflictCount' => $nonConflictCount,
+    //         'conflicts' => $conflicts, // ini aman karena pasti array
+    //     ]);
+    // }
+
+public function evaluasi()
+{
+    // Baca fitness dari file
+    $fitness = 0;
+    $fitnessFile = storage_path('logs/fitness.txt');
+    if (file_exists($fitnessFile)) {
+        $fitness = (float) trim(file_get_contents($fitnessFile));
     }
 
-    
+    // Baca hasil generate (jumlah berhasil dan skipped)
+    $hasilGenerateFile = storage_path('logs/hasil_generate.json');
+    $hasilGenerate = ['berhasil' => 0, 'skipped' => 0];
+    if (file_exists($hasilGenerateFile)) {
+        $hasilGenerate = json_decode(file_get_contents($hasilGenerateFile), true) ?: $hasilGenerate;
+    }
+
+    $total = $hasilGenerate['berhasil'] ?? 0;
+    $skipped = $hasilGenerate['skipped'] ?? 0;
+
+    // Ambil semua jadwal dari DB
+    $jadwals = \App\Models\Jadwal::with(['guru', 'kelas', 'mapel', 'ruangan', 'waktu'])->get();
+
+    // Hitung total konflik guru
+    $conflictGuru = $jadwals
+        ->groupBy(fn($j) => $j->guru_id . '-' . $j->waktu_id)
+        ->filter(fn($group) => $group->count() > 1)
+        ->count();
+
+    // Hitung total konflik kelas
+    $conflictKelas = $jadwals
+        ->groupBy(fn($j) => $j->kelas_id . '-' . $j->waktu_id)
+        ->filter(fn($group) => $group->count() > 1)
+        ->count();
+
+    // Hitung total konflik ruangan
+    $conflictRuangan = $jadwals
+        ->groupBy(fn($j) => $j->ruangan_id . '-' . $j->waktu_id)
+        ->filter(fn($group) => $group->count() > 1)
+        ->count();
+
+    $totalConflicts = $conflictGuru + $conflictKelas + $conflictRuangan;
+
+    $nonConflictCount = max(0, $total - $totalConflicts);
+
+    return view('jadwal.evaluasi', [
+        'total' => $total,
+        'skipped' => $skipped,
+        'fitness' => round($fitness, 4),
+        'nonConflictCount' => $nonConflictCount,
+        'totalConflicts' => $totalConflicts,
+        'conflictGuru' => $conflictGuru,
+        'conflictKelas' => $conflictKelas,
+        'conflictRuangan' => $conflictRuangan,
+        'conflicts' => [], // kalau mau detail konflik, bisa tambahkan logika tambahan
+    ]);
+}
+
+
+
+
+
     public function showGenerateForm()
     {
         return view('jadwal.generate');

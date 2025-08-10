@@ -18,7 +18,7 @@ class Mapel extends Model
 
     public function guru()
     {
-        return $this->belongsTo(Guru::class);
+     return $this->belongsToMany(Guru::class, 'pengampu');
     }
     
     public function ruangan()

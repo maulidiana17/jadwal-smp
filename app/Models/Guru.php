@@ -18,7 +18,7 @@ class Guru extends Model
 
     public function mapel()
     {
-        return $this->belongsTo(Mapel::class);
+        return $this->belongsToMany(Mapel::class, 'pengampu');
     }
 
     public function ruangan()
@@ -28,7 +28,7 @@ class Guru extends Model
     
     public function kelas()
     {
-        return $this->belongsTo(Kelas::class);
+        return $this->belongsToMany(Kelas::class, 'pengampu');
     }
 
     public function jadwal()

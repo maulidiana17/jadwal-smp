@@ -87,6 +87,8 @@ class GuruController extends Controller
     {
         try {
             \App\Models\Guru::query()->delete();
+            // Reset auto increment ke 1
+            \DB::statement('ALTER TABLE guru AUTO_INCREMENT = 1');
             return redirect()->route('guru.index')->with('success', 'Seluruh data guru berhasil direset.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal mereset data: ' . $e->getMessage());
