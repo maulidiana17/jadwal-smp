@@ -409,7 +409,7 @@ class GeneticScheduler
         return !empty($remaining) ? collect($remaining)->random() : null;
     }
 
-        protected function fitness($chrom)
+    protected function fitness($chrom)
     {
         $KG = $KR = $KW = 0;
 
@@ -437,9 +437,27 @@ class GeneticScheduler
         $totalPenalty = $KG + $KR + $KW;
         $hardScore = 1 / (1 + $totalPenalty);
 
+// ✅ Tambah penalti jika jam_per_minggu tidak terpenuhi
+        $missingPenalty = 0;
+        foreach ($this->requirements as $req) {
+            $countPlaced = 0;
+            foreach ($chrom as $gene) {
+                if ($gene['kelas_id'] == $req['kelas_id'] && $gene['mapel_id'] == $req['mapel_id']) {
+                    $countPlaced++;
+                }
+            }
+            $diff = abs($countPlaced - $req['jumlah_jam']);
+            if ($diff > 0) {
+                $missingPenalty += $diff * 1; // penalti 1 poin per jam yang kurang/lebih
+            }
+        }
+
+        $missingScore = 1 / (1 + $missingPenalty);
+
         Log::info("Fitness computed: totalPenalty=$totalPenalty, hardScore=$hardScore");
-        
-        return $hardScore;
+
+        // ✅ Bobot disesuaikan: hard rule 90%, missing jam 10%
+        return (0.9 * $hardScore) + (0.1 * $missingScore);
     }
 
 
