@@ -11,22 +11,22 @@
                     @csrf
                         <div class="mb-3">
                             <label>Jumlah Populasi</label>
-                            <input type="number" name="popSize" class="form-control" value="100" required>
+                            <input type="number" name="popSize" class="form-control" value="20" required>
                         </div>
 
                         <div class="mb-3">
                             <label>Probabilitas Crossover (0.6 - 1)</label>
-                            <input type="number" name="crossRate" class="form-control" step="0.01" value="0.8" required>
+                            <input type="number" name="crossRate" class="form-control" step="0.01" value="0.7" required>
                         </div>
 
                         <div class="mb-3">
                             <label>Probabilitas Mutasi (0.1 - 1)</label>
-                            <input type="number" name="mutRate" class="form-control" step="0.01" value="0.2" required>
+                            <input type="number" name="mutRate" class="form-control" step="0.01" value="0.3" required>
                         </div>
 
                         <div class="mb-3">
                             <label>Jumlah Generasi</label>
-                            <input type="number" name="generations" class="form-control" value="200" required>
+                            <input type="number" name="generations" class="form-control" value="100" required>
                         </div>
 
                         <button type="submit" class="btn btn-info">Mulai Generate</button>
